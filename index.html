@@ -164,6 +164,24 @@
   <!-- ============ BOOKING VIEW ============ -->
   <div id="bookingView">
 
+  <!-- CALENDAR PEEK (collapsible) -->
+  <details class="card" id="peekCard" style="padding:0;">
+    <summary style="list-style:none;cursor:pointer;padding:18px 22px;font-family:ui-monospace,Menlo,monospace;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);">▾ Peek at my calendar</summary>
+    <div style="padding:0 22px 22px;">
+      <div class="grid">
+        <div class="field">
+          <label>Calendar</label>
+          <select id="calPick"><option value="primary">Connect Google to load your calendars</option></select>
+        </div>
+        <div class="field">
+          <label>Day</label>
+          <input id="peekDate" type="date">
+        </div>
+      </div>
+      <div id="peekList" class="slots" style="margin-top:14px;">Connect Google Calendar (in Settings), then pick a day.</div>
+    </div>
+  </details>
+
   <!-- STEP 1: MESSAGE + DETAILS (merged) -->
   <div class="card" id="bookingCard">
     <h2><span class="step-tag">Step 1</span> The message &amp; the details</h2>
@@ -179,6 +197,7 @@
 
     <!-- review fields appear here once the message is read -->
     <div id="reviewBlock" class="hidden" style="margin-top:22px;border-top:1px solid var(--line);padding-top:20px;">
+      <div class="avail free hidden" id="openBanner" style="margin-top:0;"></div>
       <div class="grid" style="margin-bottom:16px;">
         <div class="field">
           <label>Client name</label>
@@ -364,7 +383,8 @@ const DEFAULTS = {
   calInvite: false,       // include the "you'll get a calendar invite" line in the reply
   worker: "",             // Cloudflare Worker URL that proxies Claude
   dayStart: "09:00",
-  dayEnd: "18:00"
+  dayEnd: "18:00",
+  calendarId: "primary"   // which Google calendar to check/book (set by the dropdown)
 };
 let settings = loadSettings();
 
@@ -386,7 +406,11 @@ const state = {
   parsed: {},
   lastEvent: null,
   lastAvail: null,        // { free, reason, freeWindows: [...] }
-  stage: "offer"          // "offer" (step 1) or "confirm" (step 3)
+  open: false,            // true when the client asked for a range, not one time
+  rangeStart: null,       // ISO date
+  rangeEnd: null,         // ISO date
+  rangeSlots: [],         // [{ dateISO, hhmm, label }] suggested across the range
+  stage: "offer"          // "offer" (step 1) or "confirm" (step 2)
 };
 
 // =====================================================================
@@ -423,6 +447,13 @@ const VOICE = [
 ].join(" ");
 
 function describeAvail() {
+  if (state.open) {
+    if (state.rangeSlots && state.rangeSlots.length) {
+      return "The client asked for availability across a range, not one time. "
+        + "Offer these free options and ask which suits: " + state.rangeSlots.map(s => s.label).join("; ") + ".";
+    }
+    return "The client asked for availability across a range, but no free slots were found in that window. Ask them for a couple of days that suit and you'll check.";
+  }
   const a = state.lastAvail;
   if (!a) return "Availability unknown.";
   if (a.free) return "The requested slot IS free on the calendar.";
@@ -462,8 +493,10 @@ function initGoogle() {
       if (resp.error) { setCalStatus("warn", "Sign-in failed: " + resp.error); return; }
       googleToken = { access_token: resp.access_token, expiry: Date.now() + (resp.expires_in * 1000) };
       setCalStatus("on", "Connected — events will be created live");
+      loadCalendars();          // populate the calendar dropdown
+      loadPeek();               // refresh the peek panel if open
       if (pendingAfterAuth) { const fn = pendingAfterAuth; pendingAfterAuth = null; fn(); }
-      else checkAvailability();
+      else if ($("reviewBlock") && !$("reviewBlock").classList.contains("hidden")) checkAvailability();
     }
   });
   setCalStatus("off", "Ready — tap Connect Google Calendar");
@@ -482,6 +515,9 @@ function signOutGoogle() {
   setCalStatus("off", "Signed out");
 }
 
+// which calendar to check/book (chosen in the dropdown, falls back to primary)
+function calId() { return settings.calendarId || CONFIG.CALENDAR_ID || "primary"; }
+
 // freeBusy check + free-window finder across the working day
 async function realAvailability(dateISO, time, durMin) {
   const start = new Date(`${dateISO}T${time}:00`);
@@ -490,7 +526,7 @@ async function realAvailability(dateISO, time, durMin) {
   const dayEnd = new Date(`${dateISO}T${settings.dayEnd}:00`);
   const body = {
     timeMin: dayStart.toISOString(), timeMax: dayEnd.toISOString(),
-    timeZone: CONFIG.TIMEZONE, items: [{ id: CONFIG.CALENDAR_ID }]
+    timeZone: CONFIG.TIMEZONE, items: [{ id: calId() }]
   };
   const r = await fetch("https://www.googleapis.com/calendar/v3/freeBusy", {
     method: "POST",
@@ -499,7 +535,7 @@ async function realAvailability(dateISO, time, durMin) {
   });
   if (!r.ok) throw new Error("freeBusy " + r.status + ": " + await r.text());
   const j = await r.json();
-  const busy = ((j.calendars && j.calendars[CONFIG.CALENDAR_ID] && j.calendars[CONFIG.CALENDAR_ID].busy) || [])
+  const busy = ((j.calendars && j.calendars[calId()] && j.calendars[calId()].busy) || [])
     .map(b => ({ s: new Date(b.start), e: new Date(b.end) }));
 
   // Is the requested slot clear?
@@ -527,6 +563,99 @@ function addWindow(arr, s, e, durMin) {
 }
 function hhmm(d) { return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0"); }
 
+// Scan a date range and return one suggested slot per free weekday (up to maxDays).
+// Used when a client asks for availability over a span ("next week") rather than a single time.
+async function findSlotsInRange(startISO, endISO, durMin, maxDays = 3) {
+  const timeMin = new Date(`${startISO}T${settings.dayStart}:00`);
+  const timeMax = new Date(`${endISO}T${settings.dayEnd}:00`);
+  const r = await fetch("https://www.googleapis.com/calendar/v3/freeBusy", {
+    method: "POST",
+    headers: { "Authorization": "Bearer " + googleToken.access_token, "Content-Type": "application/json" },
+    body: JSON.stringify({ timeMin: timeMin.toISOString(), timeMax: timeMax.toISOString(),
+                           timeZone: CONFIG.TIMEZONE, items: [{ id: calId() }] })
+  });
+  if (!r.ok) throw new Error("freeBusy " + r.status + ": " + await r.text());
+  const j = await r.json();
+  const busy = ((j.calendars && j.calendars[calId()] && j.calendars[calId()].busy) || [])
+    .map(b => ({ s: new Date(b.start), e: new Date(b.end) }));
+
+  const slots = [];
+  let cur = startISO;
+  while (cur <= endISO && slots.length < maxDays) {
+    const dow = new Date(cur + "T00:00:00").getDay();
+    if (dow !== 0 && dow !== 6) {                       // skip Sun(0) & Sat(6)
+      const ds = new Date(`${cur}T${settings.dayStart}:00`);
+      const de = new Date(`${cur}T${settings.dayEnd}:00`);
+      const wins = [];
+      let cursor = new Date(ds);
+      const dayBusy = busy.filter(b => b.e > ds && b.s < de).sort((a, b) => a.s - b.s);
+      for (const b of dayBusy) {
+        if (b.s > cursor) addWindow(wins, cursor, new Date(Math.min(b.s, de)), durMin);
+        if (b.e > cursor) cursor = new Date(b.e);
+        if (cursor >= de) break;
+      }
+      if (cursor < de) addWindow(wins, cursor, de, durMin);
+      if (wins.length) {
+        const w = wins[0];
+        slots.push({ dateISO: cur, hhmm: hhmm(w.start), label: fmtDate(cur) + " at " + fmtTime(hhmm(w.start)) });
+      }
+    }
+    cur = addDaysISO(cur, 1);
+  }
+  return slots;
+}
+
+// ---------- CALENDAR DROPDOWN + DAY PEEK ----------
+async function loadCalendars() {
+  if (!tokenValid()) return;
+  try {
+    const r = await fetch("https://www.googleapis.com/calendar/v3/users/me/calendarList?minAccessRole=writer", {
+      headers: { "Authorization": "Bearer " + googleToken.access_token }
+    });
+    if (!r.ok) throw new Error("calendarList " + r.status);
+    const j = await r.json();
+    const sel = $("calPick");
+    if (!sel) return;
+    sel.innerHTML = "";
+    (j.items || []).forEach(c => {
+      const o = document.createElement("option");
+      o.value = c.id;
+      o.textContent = c.summaryOverride || c.summary || c.id;
+      if (c.primary) o.textContent += " (primary)";
+      sel.appendChild(o);
+    });
+    const ids = (j.items || []).map(c => c.id);
+    sel.value = ids.includes(settings.calendarId) ? settings.calendarId
+              : (ids.includes("primary") ? "primary" : (ids[0] || "primary"));
+    settings.calendarId = sel.value;
+    saveSettingsToStore();
+  } catch (e) { /* leave the placeholder option */ }
+}
+
+async function loadPeek() {
+  const list = $("peekList");
+  if (!list) return;
+  if (!tokenValid()) { list.textContent = "Connect Google Calendar (in Settings) to see your day."; return; }
+  const day = $("peekDate").value || todayISO();
+  list.innerHTML = '<span class="spinner"></span>Loading…';
+  try {
+    const timeMin = new Date(`${day}T00:00:00`).toISOString();
+    const timeMax = new Date(`${day}T23:59:59`).toISOString();
+    const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId())}/events`
+      + `?singleEvents=true&orderBy=startTime&timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`;
+    const r = await fetch(url, { headers: { "Authorization": "Bearer " + googleToken.access_token } });
+    if (!r.ok) throw new Error("events " + r.status);
+    const j = await r.json();
+    const items = (j.items || []).filter(e => e.status !== "cancelled");
+    if (!items.length) { list.innerHTML = "Nothing booked that day — you're clear."; return; }
+    list.innerHTML = items.map(e => {
+      const t = e.start.dateTime ? fmtTime(hhmm(new Date(e.start.dateTime))) : "all day";
+      const title = e.summary || "(busy)";
+      return `<div style="padding:4px 0;"><b>${t}</b> · ${title}</div>`;
+    }).join("");
+  } catch (e) { list.textContent = "Couldn't load — " + e.message; }
+}
+
 // create the real event
 async function createCalendarEvent() {
   const start = new Date(`${$("fDate").value}T${$("fTime").value}:00`);
@@ -546,7 +675,7 @@ async function createCalendarEvent() {
   if (clientEmail) ev.attendees = [{ email: clientEmail }];
   const sendUpdates = clientEmail ? "all" : "none";   // emails the client their invite
 
-  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CONFIG.CALENDAR_ID)}/events?sendUpdates=${sendUpdates}`;
+  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId())}/events?sendUpdates=${sendUpdates}`;
   const r = await fetch(url, {
     method: "POST",
     headers: { "Authorization": "Bearer " + googleToken.access_token, "Content-Type": "application/json" },
@@ -604,8 +733,10 @@ async function extractWithClaude(msg) {
     "Return ONLY a JSON object, no prose, with keys: " +
     "name (string, empty if unknown), location ('waterloo' | 'bethnal' | ''), " +
     "date ('YYYY-MM-DD' or ''), time ('HH:MM' 24-hour or ''), " +
-    "clientType ('new' | 'returning' | ''), duration (60 | 90 | null). " +
-    "Use '' or null for anything not stated in the message.";
+    "clientType ('new' | 'returning' | ''), duration (60 | 90 | null), " +
+    "open (true if they asked for availability over a span like 'next week' / 'sometime Thursday or Friday' / 'any day' rather than one specific time, else false), " +
+    "rangeStart ('YYYY-MM-DD' first day of that span or ''), rangeEnd ('YYYY-MM-DD' last day or ''). " +
+    "When open is true, still fill rangeStart and rangeEnd. Use '' or null for anything not stated in the message.";
   const text = await askClaude(sys, msg);
   const m = text.match(/\{[\s\S]*\}/);
   if (!m) throw new Error("no json from claude");
@@ -617,13 +748,26 @@ function normaliseExtract(j) {
   const loc = j.location === "bethnal" ? LOCATIONS.bethnal
             : j.location === "waterloo" ? LOCATIONS.waterloo
             : (guessed.push("location"), LOCATIONS.waterloo);
-  const date = j.date || (guessed.push("date"), addDaysISO(todayISO(), 1));
-  const time = j.time || (guessed.push("time"), "15:00");
+  const open = j.open === true;
+  let rangeStart = j.rangeStart || null, rangeEnd = j.rangeEnd || null;
+  if (open && (!rangeStart || !rangeEnd)) { const w = thisOrNextWeekRange(); rangeStart = rangeStart || w.start; rangeEnd = rangeEnd || w.end; }
+  const date = j.date || (open ? rangeStart : (guessed.push("date"), addDaysISO(todayISO(), 1)));
+  const time = j.time || (open ? "" : (guessed.push("time"), "15:00"));
   const clientType = (j.clientType === "returning") ? "returning" : "new";
   if (!j.clientType) guessed.push("clientType");
   const duration = (String(j.duration) === "90") ? "90"
                  : (String(j.duration) === "60") ? "60" : settings.dur;
-  return { name: j.name || "", clientType, location: loc, date, time, duration, guessed };
+  return { name: j.name || "", clientType, location: loc, date, time: time || "10:00", duration, guessed, open, rangeStart, rangeEnd };
+}
+
+// Mon–Fri of next week (used as a sensible default span for "next week" requests)
+function thisOrNextWeekRange() {
+  const t = todayISO();
+  const dow = new Date(t + "T00:00:00").getDay();
+  let toNextMon = (8 - dow) % 7; if (toNextMon === 0) toNextMon = 7;
+  const start = addDaysISO(t, toNextMon);
+  const end = addDaysISO(start, 4);
+  return { start, end };
 }
 
 // ---------- RULE-BASED PARSER (offline fallback) ----------
@@ -664,12 +808,22 @@ function parseMessage(msg) {
   let timeGuessed = false;
   if (!time) { time = lower.includes("morning") ? "10:00" : "15:00"; timeGuessed = true; }
 
+  // open / range request: a span word is present and no specific clock time was given
+  const spanWord = /next week|this week|any day|some ?time|which days|what days|whenever|free this|free next/.test(lower);
+  const open = spanWord && !t;            // no clock time matched -> treat as open
+  let rangeStart = null, rangeEnd = null;
+  if (open) {
+    if (lower.includes("next week")) { const w = thisOrNextWeekRange(); rangeStart = w.start; rangeEnd = w.end; }
+    else { rangeStart = addDaysISO(todayISO(), 1); rangeEnd = addDaysISO(todayISO(), 7); }
+  }
+
   const guessed = ["clientType"];
   if (!hasLoc) guessed.push("location");
-  if (dateGuessed) guessed.push("date");
-  if (timeGuessed) guessed.push("time");
+  if (!open && dateGuessed) guessed.push("date");
+  if (!open && timeGuessed) guessed.push("time");
 
-  return { name, clientType: "new", location: loc, date, time, duration: settings.dur, guessed };
+  return { name, clientType: "new", location: loc, date: open ? rangeStart : date,
+           time, duration: settings.dur, guessed, open, rangeStart, rangeEnd };
 }
 
 // ---------- AVAILABILITY (real if connected, simulated otherwise) ----------
@@ -712,12 +866,50 @@ $("readBtn").addEventListener("click", async () => {
 $("draftBtn").addEventListener("click", async () => {
   const btn = $("draftBtn");
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Drafting…';
-  await checkAvailability();          // re-check in case the time was edited
+  if (state.open) {
+    await scanRange();                // find free slots across the requested span
+  } else {
+    await checkAvailability();        // re-check in case the time was edited
+  }
   await draftReply("offer");          // single draft (Claude, or template fallback)
   $("replyCard").classList.remove("hidden");
   btn.disabled = false; btn.textContent = "Check & draft reply";
   $("replyCard").scrollIntoView({ behavior: "smooth" });
 });
+
+// Scan the requested range for free slots and show them (open requests only)
+async function scanRange() {
+  const a = $("avail"), sl = $("slots");
+  a.className = "avail checking";
+  a.innerHTML = '<span class="spinner"></span>Finding free times across the range…';
+  sl.classList.add("hidden");
+  if (!tokenValid()) {
+    state.rangeSlots = [];
+    a.className = "avail busy";
+    a.textContent = "Connect Google Calendar (in Settings) to scan the week. I'll draft a reply asking which days suit.";
+    return;
+  }
+  try {
+    const slots = await findSlotsInRange(state.rangeStart, state.rangeEnd, parseInt($("fDur").value, 10), 3);
+    state.rangeSlots = slots;
+    if (slots.length) {
+      a.className = "avail free";
+      a.textContent = "Found " + slots.length + " free option" + (slots.length > 1 ? "s" : "") + " to offer.";
+      sl.classList.remove("hidden");
+      sl.innerHTML = "Offering: " + slots.map(s => "<b>" + s.label + "</b>").join(" · ");
+      // pre-set the booking fields to the first option so confirming later just works
+      $("fDate").value = slots[0].dateISO;
+      $("fTime").value = slots[0].hhmm;
+    } else {
+      a.className = "avail busy";
+      a.textContent = "No free slots in that window — the draft will ask them for other days.";
+    }
+  } catch (e) {
+    state.rangeSlots = [];
+    a.className = "avail busy";
+    a.textContent = "Couldn't scan — " + e.message;
+  }
+}
 
 function fillReview(p) {
   $("fName").value = p.name;
@@ -726,11 +918,25 @@ function fillReview(p) {
   $("fTime").value = p.time;
   $("fDur").value = p.duration;
   state.clientType = p.clientType;
+  state.open = !!p.open;
+  state.rangeStart = p.rangeStart || null;
+  state.rangeEnd = p.rangeEnd || null;
+  state.rangeSlots = [];
   document.querySelectorAll("#clientType .pill").forEach(pill =>
     pill.classList.toggle("active", pill.dataset.type === p.clientType));
   ["dateField","timeField","locField","durField"].forEach(f => $(f).classList.remove("guessed"));
   const map = { date:"dateField", time:"timeField", location:"locField", duration:"durField" };
   p.guessed.forEach(g => { if (map[g]) $(map[g]).classList.add("guessed"); });
+
+  // Open request banner: just confirm the site, the draft will offer times across the range.
+  const banner = $("openBanner");
+  if (state.open) {
+    banner.classList.remove("hidden");
+    banner.textContent = "Open request — I'll suggest free times across " + fmtDate(state.rangeStart)
+      + " to " + fmtDate(state.rangeEnd) + ". Check the location, then draft.";
+  } else {
+    banner.classList.add("hidden");
+  }
 }
 
 $("clientType").addEventListener("click", e => {
@@ -856,9 +1062,15 @@ function replyContext(stage) {
   let task;
   if (stage === "offer") {
     fields.push("Calendar: " + describeAvail());
-    task = state.lastAvail && !state.lastAvail.free
-      ? "Write the FIRST reply. The requested time clashes, so apologise lightly and offer the free times listed above, asking which suits. Do not confirm a booking yet. Do not mention any intake form."
-      : "Write the FIRST reply. Warmly say the requested time works and you've pencilled them in, and invite them to confirm. Do not mention any intake form yet.";
+    if (state.open) {
+      task = state.rangeSlots && state.rangeSlots.length
+        ? "Write the FIRST reply. The client asked for availability over a range. Offer the specific free times listed above (give them as friendly options) and ask which one suits. Do not confirm yet. Do not mention any intake form."
+        : "Write the FIRST reply. The client asked for availability but nothing is free in that window. Warmly ask which couple of days would suit and say you'll check. Do not mention any intake form.";
+    } else {
+      task = state.lastAvail && !state.lastAvail.free
+        ? "Write the FIRST reply. The requested time clashes, so apologise lightly and offer the free times listed above, asking which suits. Do not confirm a booking yet. Do not mention any intake form."
+        : "Write the FIRST reply. Warmly say the requested time works and you've pencilled them in, and invite them to confirm. Do not mention any intake form yet.";
+    }
   } else {
     if (wantInvite) fields.push("Mention they'll get a calendar invite to tap Yes on.");
     if (isNew) fields.push("Intake form link (include naturally, ask them to fill it in before the first session): " + settings.intake);
@@ -879,6 +1091,12 @@ function templateReply(stage) {
   const isNew = state.clientType === "new";
 
   if (stage === "offer") {
+    if (state.open) {
+      const opts = (state.rangeSlots || []).map(s => s.label).join(", ");
+      return opts
+        ? `Hi ${name}, lovely to hear from you. I've got a few times free at ${loc}: ${opts}. Would any of those suit? ${settings.signoff}`
+        : `Hi ${name}, lovely to hear from you. Let me know a couple of days that suit at ${loc} and I'll check what's free. ${settings.signoff}`;
+    }
     if (state.lastAvail && !state.lastAvail.free) {
       const opts = (state.lastAvail.freeWindows || []).map(w => w.label).join(", ");
       return `Hi ${name}, lovely to hear from you. ${time} on ${date} is already taken, sorry. `
@@ -1048,10 +1266,20 @@ $("saveSettings").addEventListener("click", () => {
 $("calBtn").addEventListener("click", () => connectGoogle());
 $("calSignOut").addEventListener("click", signOutGoogle);
 
+// ---------- CALENDAR PEEK WIRING ----------
+$("calPick").addEventListener("change", () => {
+  settings.calendarId = $("calPick").value;
+  saveSettingsToStore();
+  loadPeek();
+});
+$("peekDate").addEventListener("change", loadPeek);
+$("peekCard").addEventListener("toggle", () => { if ($("peekCard").open) loadPeek(); });
+
 // ---------- INIT ----------
 fillSettingsForm();
 applyLocationsToSelect();
 $("fDur").value = settings.dur;
+$("peekDate").value = todayISO();
 syncSendUi();
 syncInviteUi();
 setAiStatus();
