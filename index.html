@@ -185,19 +185,22 @@
   <!-- STEP 1: MESSAGE + DETAILS (merged) -->
   <div class="card" id="bookingCard">
     <h2><span class="step-tag">Step 1</span> The message &amp; the details</h2>
-    <div class="channel-toggle" id="channelToggle">
-      <div class="pill active" data-channel="whatsapp">From WhatsApp</div>
-      <div class="pill" data-channel="gmail">From Gmail</div>
-    </div>
-    <textarea id="msgInput" placeholder="Paste the client's message here…">Hi there : can I book a session at waterloo on Wednesday afternoon next week about 3.00pm ? Graham</textarea>
+    <textarea id="msgInput" placeholder="Paste the client's message here…">Hi there : do you have any availability next week at waterloo ? Graham</textarea>
     <div class="btn-row">
       <button class="btn" id="readBtn">Read message</button>
     </div>
-    <p class="help">I'll pull out the day, time and site. Fix anything in orange, then draft.</p>
+    <p class="help">I'll work out whether they're asking what's free or naming a time, and pull out the site. Fix anything in orange, then draft.</p>
 
     <!-- review fields appear here once the message is read -->
     <div id="reviewBlock" class="hidden" style="margin-top:22px;border-top:1px solid var(--line);padding-top:20px;">
-      <div class="avail free hidden" id="openBanner" style="margin-top:0;"></div>
+
+      <label style="display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-family:ui-monospace,Menlo,monospace;">What does this message need?</label>
+      <div class="clienttype" id="intentToggle">
+        <div class="pill" data-intent="open">They're asking what's free</div>
+        <div class="pill" data-intent="specific">They want a specific time</div>
+      </div>
+      <p class="help" id="intentHelp" style="margin-top:-8px;margin-bottom:14px;"></p>
+
       <div class="grid" style="margin-bottom:16px;">
         <div class="field">
           <label>Client name</label>
@@ -230,6 +233,7 @@
             <option value="90">90 minutes</option>
           </select>
         </div>
+        <!-- "A specific time" fields -->
         <div class="field" id="dateField">
           <label>Date</label>
           <input id="fDate" type="date">
@@ -238,9 +242,18 @@
           <label>Start time</label>
           <input id="fTime" type="time">
         </div>
+        <!-- "What's free" range fields -->
+        <div class="field hidden" id="rangeStartField">
+          <label>From</label>
+          <input id="fRangeStart" type="date">
+        </div>
+        <div class="field hidden" id="rangeEndField">
+          <label>To</label>
+          <input id="fRangeEnd" type="date">
+        </div>
       </div>
 
-      <div class="avail checking" id="avail">Select a slot to check availability.</div>
+      <div class="avail checking" id="avail">Read a message to begin.</div>
       <div class="slots hidden" id="slots"></div>
 
       <div class="btn-row">
@@ -399,7 +412,6 @@ function workerUrl() { return (settings.worker || CONFIG.WORKER_URL || "").trim(
 
 const LOCATIONS = { get waterloo(){return settings.loc1;}, get bethnal(){return settings.loc2;} };
 const state = {
-  channel: "whatsapp",
   clientType: "new",
   sendVia: "copy",
   calInvite: settings.calInvite,
@@ -839,11 +851,29 @@ async function availability(dateISO, time, durMin) {
 // ---------- UI WIRING ----------
 const $ = id => document.getElementById(id);
 
-$("channelToggle").addEventListener("click", e => {
-  if (!e.target.dataset.channel) return;
-  state.channel = e.target.dataset.channel;
-  document.querySelectorAll("#channelToggle .pill").forEach(p => p.classList.toggle("active", p === e.target));
+// ===== Intent toggle: "what's free" vs "a specific time" =====
+$("intentToggle").addEventListener("click", e => {
+  if (!e.target.dataset.intent) return;
+  state.open = e.target.dataset.intent === "open";
+  state.rangeSlots = [];
+  syncMode();
 });
+
+// Show the right fields + button label for the current intent
+function syncMode() {
+  document.querySelectorAll("#intentToggle .pill").forEach(p =>
+    p.classList.toggle("active", (p.dataset.intent === "open") === state.open));
+  ["dateField","timeField"].forEach(id => $(id).classList.toggle("hidden", state.open));
+  ["rangeStartField","rangeEndField"].forEach(id => $(id).classList.toggle("hidden", !state.open));
+  $("draftBtn").textContent = state.open ? "Find times & draft reply" : "Check & draft reply";
+  $("intentHelp").textContent = state.open
+    ? "No single day needed — I'll scan the range below and offer free times in the reply."
+    : "I'll check this exact day and time on your calendar.";
+  const a = $("avail");
+  if (a && a.classList.contains("checking")) {
+    a.textContent = state.open ? "Set the range, then draft to find free times." : "Draft to check this slot.";
+  }
+}
 
 // ===== STEP 1a: Read the message -> fill fields (NO draft yet) =====
 $("readBtn").addEventListener("click", async () => {
@@ -858,7 +888,7 @@ $("readBtn").addEventListener("click", async () => {
   fillReview(p);
   $("reviewBlock").classList.remove("hidden");
   btn.disabled = false; btn.textContent = "Read message again";
-  await checkAvailability();          // sets state.lastAvail for the read-in slot
+  if (!state.open) await checkAvailability();   // single-slot check only in "specific time" mode
   $("reviewBlock").scrollIntoView({ behavior: "smooth", block: "nearest" });
 });
 
@@ -890,13 +920,17 @@ async function scanRange() {
     return;
   }
   try {
+    // read the range straight from the inputs (Phoenix may have adjusted them)
+    state.rangeStart = $("fRangeStart").value || state.rangeStart;
+    state.rangeEnd = $("fRangeEnd").value || state.rangeEnd;
     const slots = await findSlotsInRange(state.rangeStart, state.rangeEnd, parseInt($("fDur").value, 10), 3);
     state.rangeSlots = slots;
     if (slots.length) {
       a.className = "avail free";
       a.textContent = "Found " + slots.length + " free option" + (slots.length > 1 ? "s" : "") + " to offer.";
       sl.classList.remove("hidden");
-      sl.innerHTML = "Offering: " + slots.map(s => "<b>" + s.label + "</b>").join(" · ");
+      sl.innerHTML = "Tap one to book it: " + slots.map(s =>
+        `<b class="slot-pick" data-d="${s.dateISO}" data-t="${s.hhmm}" style="cursor:pointer;text-decoration:underline dotted;">${s.label}</b>`).join(" · ");
       // pre-set the booking fields to the first option so confirming later just works
       $("fDate").value = slots[0].dateISO;
       $("fTime").value = slots[0].hhmm;
@@ -919,8 +953,11 @@ function fillReview(p) {
   $("fDur").value = p.duration;
   state.clientType = p.clientType;
   state.open = !!p.open;
-  state.rangeStart = p.rangeStart || null;
-  state.rangeEnd = p.rangeEnd || null;
+  const wk = thisOrNextWeekRange();
+  state.rangeStart = p.rangeStart || wk.start;
+  state.rangeEnd = p.rangeEnd || wk.end;
+  $("fRangeStart").value = state.rangeStart;
+  $("fRangeEnd").value = state.rangeEnd;
   state.rangeSlots = [];
   document.querySelectorAll("#clientType .pill").forEach(pill =>
     pill.classList.toggle("active", pill.dataset.type === p.clientType));
@@ -928,15 +965,7 @@ function fillReview(p) {
   const map = { date:"dateField", time:"timeField", location:"locField", duration:"durField" };
   p.guessed.forEach(g => { if (map[g]) $(map[g]).classList.add("guessed"); });
 
-  // Open request banner: just confirm the site, the draft will offer times across the range.
-  const banner = $("openBanner");
-  if (state.open) {
-    banner.classList.remove("hidden");
-    banner.textContent = "Open request — I'll suggest free times across " + fmtDate(state.rangeStart)
-      + " to " + fmtDate(state.rangeEnd) + ". Check the location, then draft.";
-  } else {
-    banner.classList.add("hidden");
-  }
+  syncMode();   // show range fields or day/time fields to match the detected intent
 }
 
 $("clientType").addEventListener("click", e => {
@@ -972,8 +1001,29 @@ function syncSendUi() {
   $("fContact").placeholder = email ? "name@email.com" : "+44…";
 }
 
-["fLoc","fDate","fTime","fDur","fName"].forEach(id =>
-  $(id).addEventListener("change", checkAvailability));
+["fDate","fTime","fDur","fName"].forEach(id =>
+  $(id).addEventListener("change", () => {
+    if (state.open) { if (id === "fDur") scanRange(); }   // re-scan if duration changes
+    else checkAvailability();
+  }));
+// range inputs just update state; Phoenix presses draft to re-scan
+["fRangeStart","fRangeEnd"].forEach(id =>
+  $(id).addEventListener("change", () => {
+    state.rangeStart = $("fRangeStart").value || state.rangeStart;
+    state.rangeEnd = $("fRangeEnd").value || state.rangeEnd;
+  }));
+
+// Tap an offered slot to load it into the booking fields and switch to "specific time"
+$("slots").addEventListener("click", e => {
+  const pick = e.target.closest(".slot-pick");
+  if (!pick) return;
+  $("fDate").value = pick.dataset.d;
+  $("fTime").value = pick.dataset.t;
+  state.open = false;
+  syncMode();
+  checkAvailability();
+  showToast("Loaded " + fmtDate(pick.dataset.d) + " at " + fmtTime(pick.dataset.t) + " — re-draft or confirm below.");
+});
 
 // Re-draft current stage (Step 2 button)
 $("redraftBtn").addEventListener("click", () => draftReply(state.stage));
@@ -1055,7 +1105,7 @@ function replyContext(stage) {
     "Location: " + loc,
     "Date: " + date,
     "Time: " + time,
-    "Channel: " + (state.channel === "gmail" ? "email" : "WhatsApp"),
+    "Channel: " + (state.sendVia === "email" ? "email" : "WhatsApp"),
     "Sign off with exactly: " + settings.signoff,
     "Original message from client: \"" + $("msgInput").value.trim() + "\""
   ];
@@ -1123,7 +1173,7 @@ function updateMetaAndNote(stage) {
 
   if (stage === "confirm" && isNew) {
     note.classList.remove("hidden");
-    note.textContent = state.channel === "gmail"
+    note.textContent = state.sendVia === "email"
       ? "New client: intake form link included in the confirmation."
       : "New client via WhatsApp: the intake form link is in the confirmation message.";
   } else {
