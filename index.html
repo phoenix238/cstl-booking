@@ -153,7 +153,7 @@
     <p class="eyebrow">Intake &amp; Booking</p>
     <h1>A still point for the next client</h1>
     <p class="sub">Paste their message. I'll check your calendar and draft a reply. Approve when it's right.</p>
-    <p style="font-size:11px;color:#9a9488;margin-top:4px;">build 2026-06-24g · two-step flow · Claude-drafted replies</p>
+    <p style="font-size:11px;color:#9a9488;margin-top:4px;">build 2026-06-24h · one-card intake · Claude reads &amp; drafts</p>
   </header>
 
   <nav class="tabs" id="tabs">
@@ -164,77 +164,75 @@
   <!-- ============ BOOKING VIEW ============ -->
   <div id="bookingView">
 
-  <!-- STEP 1: PASTE -->
-  <div class="card" id="pasteCard">
-    <h2><span class="step-tag">Step 1</span> The message</h2>
+  <!-- STEP 1: MESSAGE + DETAILS (merged) -->
+  <div class="card" id="bookingCard">
+    <h2><span class="step-tag">Step 1</span> The message &amp; the details</h2>
     <div class="channel-toggle" id="channelToggle">
       <div class="pill active" data-channel="whatsapp">From WhatsApp</div>
       <div class="pill" data-channel="gmail">From Gmail</div>
     </div>
     <textarea id="msgInput" placeholder="Paste the client's message here…">Hi there : can I book a session at waterloo on Wednesday afternoon next week about 3.00pm ? Graham</textarea>
     <div class="btn-row">
-      <button class="btn" id="checkBtn">Check availability &amp; draft reply</button>
+      <button class="btn" id="readBtn">Read message</button>
     </div>
-    <p class="help">Reads the message, checks your calendar for that day, and drafts a warm reply that fits what's actually free.</p>
-  </div>
+    <p class="help">I'll pull out the day, time and site. Fix anything in orange, then draft.</p>
 
-  <!-- STEP 2: REVIEW -->
-  <div class="card hidden" id="reviewCard">
-    <h2><span class="step-tag">Step 2</span> What I worked out — correct anything in orange</h2>
+    <!-- review fields appear here once the message is read -->
+    <div id="reviewBlock" class="hidden" style="margin-top:22px;border-top:1px solid var(--line);padding-top:20px;">
+      <div class="grid" style="margin-bottom:16px;">
+        <div class="field">
+          <label>Client name</label>
+          <input id="fName" type="text">
+        </div>
+        <div class="field" id="contactField">
+          <label id="contactLabel">WhatsApp number</label>
+          <input id="fContact" type="text" placeholder="+44…">
+        </div>
+      </div>
 
-    <div class="grid" style="margin-bottom:16px;">
-      <div class="field">
-        <label>Client name</label>
-        <input id="fName" type="text">
+      <label style="display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-family:ui-monospace,Menlo,monospace;">Client type</label>
+      <div class="clienttype" id="clientType">
+        <div class="pill" data-type="new">New client</div>
+        <div class="pill" data-type="returning">Returning</div>
       </div>
-      <div class="field" id="contactField">
-        <label id="contactLabel">WhatsApp number</label>
-        <input id="fContact" type="text" placeholder="+44…">
-      </div>
-    </div>
 
-    <label style="display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-family:ui-monospace,Menlo,monospace;">Client type</label>
-    <div class="clienttype" id="clientType">
-      <div class="pill" data-type="new">New client</div>
-      <div class="pill" data-type="returning">Returning</div>
-    </div>
+      <div class="grid">
+        <div class="field" id="locField">
+          <label>Location</label>
+          <select id="fLoc">
+            <option value="Breathe London Wellbeing, Waterloo SE1">Waterloo — Breathe London (SE1)</option>
+            <option value="Community Clinic, Cambridge Heath Road, Bethnal Green E2">Bethnal Green — Community Clinic (E2)</option>
+          </select>
+        </div>
+        <div class="field" id="durField">
+          <label>Duration</label>
+          <select id="fDur">
+            <option value="60">60 minutes</option>
+            <option value="90">90 minutes</option>
+          </select>
+        </div>
+        <div class="field" id="dateField">
+          <label>Date</label>
+          <input id="fDate" type="date">
+        </div>
+        <div class="field" id="timeField">
+          <label>Start time</label>
+          <input id="fTime" type="time">
+        </div>
+      </div>
 
-    <div class="grid">
-      <div class="field" id="locField">
-        <label>Location</label>
-        <select id="fLoc">
-          <option value="Breathe London Wellbeing, Waterloo SE1">Waterloo — Breathe London (SE1)</option>
-          <option value="Community Clinic, Cambridge Heath Road, Bethnal Green E2">Bethnal Green — Community Clinic (E2)</option>
-        </select>
-      </div>
-      <div class="field" id="durField">
-        <label>Duration</label>
-        <select id="fDur">
-          <option value="60">60 minutes</option>
-          <option value="90">90 minutes</option>
-        </select>
-      </div>
-      <div class="field" id="dateField">
-        <label>Date</label>
-        <input id="fDate" type="date">
-      </div>
-      <div class="field" id="timeField">
-        <label>Start time</label>
-        <input id="fTime" type="time">
-      </div>
-    </div>
+      <div class="avail checking" id="avail">Select a slot to check availability.</div>
+      <div class="slots hidden" id="slots"></div>
 
-    <div class="avail checking" id="avail">Select a slot to check availability.</div>
-    <div class="slots hidden" id="slots"></div>
-
-    <div class="btn-row">
-      <button class="btn ghost" id="recheckBtn">Re-check &amp; re-draft</button>
+      <div class="btn-row">
+        <button class="btn" id="draftBtn">Check &amp; draft reply</button>
+      </div>
     </div>
   </div>
 
-  <!-- STEP 3: REPLY -->
+  <!-- STEP 2: REPLY -->
   <div class="card hidden" id="replyCard">
-    <h2><span class="step-tag">Step 3</span> Reply &amp; book</h2>
+    <h2><span class="step-tag">Step 2</span> Reply &amp; book</h2>
     <div class="channel-toggle" id="sendVia">
       <div class="pill active" data-send="copy">Copy for WhatsApp</div>
       <div class="pill" data-send="email">Send via Gmail</div>
@@ -256,7 +254,7 @@
       <button class="btn ghost" id="redraftBtn">Re-draft this reply</button>
       <button class="btn" id="confirmBtn">Confirm time, add form &amp; book</button>
     </div>
-    <p class="help" id="bookHelp">Step 3 confirms the time the client picked: it re-drafts a confirmation (with the intake form link for new clients), creates the event on your calendar, and opens WhatsApp/Gmail with the reply pre-typed. Enter the client's number with country code (e.g. 44 7700…) so WhatsApp opens the right chat. To send the real calendar invite, switch to "Send via Gmail" and add their email.</p>
+    <p class="help" id="bookHelp">This step confirms the time the client picked: it re-drafts a confirmation (with the intake form link for new clients), creates the event on your calendar, and opens WhatsApp/Gmail with the reply pre-typed. Enter the client's number with country code (e.g. 44 7700…) so WhatsApp opens the right chat. To send the real calendar invite, switch to "Send via Gmail" and add their email.</p>
   </div>
 
   </div><!-- /bookingView -->
@@ -558,34 +556,120 @@ async function createCalendarEvent() {
   return await r.json();
 }
 
-// ---------- MESSAGE PARSER (fills the structured fields) ----------
+// ---------- DATE HELPERS (local time — no UTC shift) ----------
+function isoLocal(d) {
+  return d.getFullYear() + "-" +
+    String(d.getMonth() + 1).padStart(2, "0") + "-" +
+    String(d.getDate()).padStart(2, "0");
+}
+function todayISO() { return isoLocal(new Date()); }
+function addDaysISO(iso, n) {
+  const d = new Date(iso + "T00:00:00");
+  d.setDate(d.getDate() + n);
+  return isoLocal(d);
+}
+// Date for a given weekday (0=Sun..6=Sat). Soonest future occurrence, or — when
+// "next week" is present — that weekday inside next calendar week (Mon–Sun).
+function weekdayISO(target, nextWeek) {
+  const t = todayISO();
+  const dow = new Date(t + "T00:00:00").getDay();
+  if (nextWeek) {
+    let toNextMon = (8 - dow) % 7; if (toNextMon === 0) toNextMon = 7;  // days to next Monday
+    const offsetInWeek = (target + 6) % 7;                              // Mon=0 … Sun=6
+    return addDaysISO(t, toNextMon + offsetInWeek);
+  }
+  let delta = (target - dow + 7) % 7;
+  if (delta === 0) delta = 7;          // a named weekday always means the future, never today
+  return addDaysISO(t, delta);
+}
+
+// ---------- CLAUDE EXTRACTION (preferred) ----------
+async function extractFields(msg) {
+  if (aiReady()) {
+    try { return await extractWithClaude(msg); }
+    catch (e) { return parseMessage(msg); }   // worker down / bad JSON -> rules
+  }
+  return parseMessage(msg);
+}
+
+async function extractWithClaude(msg) {
+  const now = new Date();
+  const todayStr = now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const sys =
+    "You extract booking details from a client's message to a London craniosacral therapist. " +
+    "Today is " + todayStr + " (" + todayISO() + "), timezone Europe/London. " +
+    "Resolve any relative date (today, tomorrow, 'this Wednesday', 'next Thursday', 'next week') to an absolute date. " +
+    "If a weekday is named with no qualifier, pick the soonest future occurrence. " +
+    "'afternoon' with no clock time means about 15:00; 'morning' about 10:00; 'evening' about 18:00. " +
+    "Return ONLY a JSON object, no prose, with keys: " +
+    "name (string, empty if unknown), location ('waterloo' | 'bethnal' | ''), " +
+    "date ('YYYY-MM-DD' or ''), time ('HH:MM' 24-hour or ''), " +
+    "clientType ('new' | 'returning' | ''), duration (60 | 90 | null). " +
+    "Use '' or null for anything not stated in the message.";
+  const text = await askClaude(sys, msg);
+  const m = text.match(/\{[\s\S]*\}/);
+  if (!m) throw new Error("no json from claude");
+  return normaliseExtract(JSON.parse(m[0]));
+}
+
+function normaliseExtract(j) {
+  const guessed = [];
+  const loc = j.location === "bethnal" ? LOCATIONS.bethnal
+            : j.location === "waterloo" ? LOCATIONS.waterloo
+            : (guessed.push("location"), LOCATIONS.waterloo);
+  const date = j.date || (guessed.push("date"), addDaysISO(todayISO(), 1));
+  const time = j.time || (guessed.push("time"), "15:00");
+  const clientType = (j.clientType === "returning") ? "returning" : "new";
+  if (!j.clientType) guessed.push("clientType");
+  const duration = (String(j.duration) === "90") ? "90"
+                 : (String(j.duration) === "60") ? "60" : settings.dur;
+  return { name: j.name || "", clientType, location: loc, date, time, duration, guessed };
+}
+
+// ---------- RULE-BASED PARSER (offline fallback) ----------
 function parseMessage(msg) {
   const lower = msg.toLowerCase();
   const nameMatch = msg.match(/([A-Z][a-z]+)\s*$/);
   const name = nameMatch ? nameMatch[1] : "";
+
+  // location
+  const hasLoc = lower.includes("bethnal") || lower.includes("waterloo");
   const loc = lower.includes("bethnal") ? LOCATIONS.bethnal : LOCATIONS.waterloo;
-  const date = nextWeekday(3); // Wednesday default
-  let time = "15:00";
-  const t = lower.match(/(\d{1,2})[.:]?(\d{2})?\s*(am|pm)?/);
+
+  // date — read the actual day, don't assume Wednesday
+  const days = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+  const nextWeek = lower.includes("next week");
+  let date = null;
+  if (/\btoday\b/.test(lower)) date = todayISO();
+  else if (/\btomorrow\b/.test(lower)) date = addDaysISO(todayISO(), 1);
+  else {
+    for (let i = 0; i < 7; i++) {
+      if (lower.includes(days[i])) { date = weekdayISO(i, nextWeek); break; }
+    }
+  }
+  let dateGuessed = false;
+  if (!date) { date = addDaysISO(todayISO(), 1); dateGuessed = true; }   // sensible default: tomorrow
+
+  // time
+  let time = null;
+  const t = lower.match(/(\d{1,2})(?:[.:](\d{2}))?\s*(am|pm)?/);
   if (t) {
     let h = parseInt(t[1], 10);
     const m = t[2] ? t[2] : "00";
-    if (lower.includes("afternoon") && h < 12) h += 12;
     if (t[3] === "pm" && h < 12) h += 12;
+    else if (t[3] === "am" && h === 12) h = 0;
+    else if (!t[3] && (lower.includes("afternoon") || lower.includes("evening")) && h < 12) h += 12;
     time = String(h).padStart(2, "0") + ":" + m;
   }
-  return {
-    name, clientType: "new", location: loc, date, time, duration: settings.dur,
-    guessed: ["clientType", time === "15:00" ? "time" : null].filter(Boolean)
-  };
-}
+  let timeGuessed = false;
+  if (!time) { time = lower.includes("morning") ? "10:00" : "15:00"; timeGuessed = true; }
 
-function nextWeekday(target) {
-  const d = new Date();
-  const day = d.getDay();
-  const result = new Date(d);
-  result.setDate(d.getDate() + ((target - day + 7) % 7 || 7));
-  return result.toISOString().slice(0, 10);
+  const guessed = ["clientType"];
+  if (!hasLoc) guessed.push("location");
+  if (dateGuessed) guessed.push("date");
+  if (timeGuessed) guessed.push("time");
+
+  return { name, clientType: "new", location: loc, date, time, duration: settings.dur, guessed };
 }
 
 // ---------- AVAILABILITY (real if connected, simulated otherwise) ----------
@@ -607,21 +691,32 @@ $("channelToggle").addEventListener("click", e => {
   document.querySelectorAll("#channelToggle .pill").forEach(p => p.classList.toggle("active", p === e.target));
 });
 
-// ===== STEP 1: Check availability & draft offer =====
-$("checkBtn").addEventListener("click", async () => {
+// ===== STEP 1a: Read the message -> fill fields (NO draft yet) =====
+$("readBtn").addEventListener("click", async () => {
   const msg = $("msgInput").value.trim();
   if (!msg) return;
-  const btn = $("checkBtn");
+  const btn = $("readBtn");
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Reading…';
-  const p = parseMessage(msg);
+  let p;
+  try { p = await extractFields(msg); }
+  catch (e) { p = parseMessage(msg); }
   state.parsed = p;
   fillReview(p);
-  $("reviewCard").classList.remove("hidden");
+  $("reviewBlock").classList.remove("hidden");
+  btn.disabled = false; btn.textContent = "Read message again";
+  await checkAvailability();          // sets state.lastAvail for the read-in slot
+  $("reviewBlock").scrollIntoView({ behavior: "smooth", block: "nearest" });
+});
+
+// ===== STEP 1b: Draft once, after the details are correct =====
+$("draftBtn").addEventListener("click", async () => {
+  const btn = $("draftBtn");
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Drafting…';
+  await checkAvailability();          // re-check in case the time was edited
+  await draftReply("offer");          // single draft (Claude, or template fallback)
   $("replyCard").classList.remove("hidden");
-  await checkAvailability();          // sets state.lastAvail
-  await draftReply("offer");          // Claude offer draft (or template)
-  btn.disabled = false; btn.textContent = "Check availability & draft reply";
-  $("reviewCard").scrollIntoView({ behavior: "smooth" });
+  btn.disabled = false; btn.textContent = "Check & draft reply";
+  $("replyCard").scrollIntoView({ behavior: "smooth" });
 });
 
 function fillReview(p) {
@@ -674,12 +769,7 @@ function syncSendUi() {
 ["fLoc","fDate","fTime","fDur","fName"].forEach(id =>
   $(id).addEventListener("change", checkAvailability));
 
-// Re-check + re-draft offer (Step 2 button)
-$("recheckBtn").addEventListener("click", async () => {
-  await checkAvailability();
-  await draftReply("offer");
-});
-// Re-draft current stage (Step 3 button)
+// Re-draft current stage (Step 2 button)
 $("redraftBtn").addEventListener("click", () => draftReply(state.stage));
 
 async function checkAvailability() {
