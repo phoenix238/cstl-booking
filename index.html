@@ -335,8 +335,29 @@ const state = {
   clientType: "new",
   sendVia: "copy",
   parsed: {},
-  lastEvent: null
+  lastEvent: null,
+  calLink: null
 };
+
+// Build a generic "Add to Google Calendar" link from event details.
+// Works for any client (no email/invite needed) — opens a pre-filled event
+// they can save to their own calendar.
+function gcalDate(iso) {
+  return new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+}
+function addToCalendarLink(ev) {
+  try {
+    const s = gcalDate(ev.start.dateTime), e = gcalDate(ev.end.dateTime);
+    const params = new URLSearchParams({
+      action: "TEMPLATE",
+      text: ev.summary || "CST Session",
+      dates: `${s}/${e}`,
+      location: ev.location || "",
+      details: ev.description || ""
+    });
+    return "https://calendar.google.com/calendar/render?" + params.toString();
+  } catch (e) { return ""; }
+}
 
 // =====================================================================
 //  GOOGLE CALENDAR — client-side OAuth + REST calls
@@ -596,8 +617,11 @@ function buildReply() {
     note.classList.add("hidden");
   }
 
+  let calLine = "";
+  if (state.calLink) calLine = ` Here's the appointment to add to your calendar: ${state.calLink}`;
+
   $("replyText").value =
-`Hi ${name}, lovely to hear from you. ${date} at ${time} at ${loc} works nicely, I've pencilled you in.${inviteLine}${intakeLine} Looking forward to it. ${settings.signoff}`;
+`Hi ${name}, lovely to hear from you. ${date} at ${time} at ${loc} works nicely, I've pencilled you in.${inviteLine}${intakeLine}${calLine} Looking forward to it. ${settings.signoff}`;
 
   $("eventMeta").textContent =
 `Event: CST Session — ${name}${isNew ? " (new client)" : ""}, ${loc} · ${date}, ${time} · ${$("fDur").value} min`;
@@ -620,6 +644,10 @@ async function doApprove() {
   try {
     const event = await createCalendarEvent();
     state.lastEvent = event;
+    // Build the shareable "add to calendar" link and refresh the message so it
+    // contains the full reply + calendar link before we hand off to WhatsApp.
+    state.calLink = addToCalendarLink(event);
+    buildReply();
     const linkBox = $("eventLink");
     linkBox.classList.remove("hidden");
     const attendeeNote = (state.sendVia === "email" && $("fContact").value.trim())
