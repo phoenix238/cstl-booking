@@ -626,7 +626,6 @@ async function doApprove() {
       ? " The client has been emailed an invite to accept." : "";
     linkBox.innerHTML = `Event created on your calendar.${attendeeNote} <a href="${event.htmlLink}" target="_blank">Open it</a>`;
     openReplyHandoff();
-    showToast("Booked. Reply window opening…");
   } catch (e) {
     showToast("Couldn't create event: " + e.message);
   } finally {
@@ -634,10 +633,36 @@ async function doApprove() {
   }
 }
 
+function copyReply(text) {
+  // Async API works on https/localhost; falls back for file:// or when focus is lost
+  if (navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(text).then(()=>true).catch(()=>fallbackCopy(text));
+  }
+  return Promise.resolve(fallbackCopy(text));
+}
+function fallbackCopy(text) {
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed"; ta.style.top = "-9999px";
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch (e) { return false; }
+}
+
 function openReplyHandoff() {
+  // Make sure the message is current before we hand it off
+  if (!$("replyText").value.trim()) buildReply();
   const reply = $("replyText").value;
   const contact = $("fContact").value.trim();
-  if (navigator.clipboard) navigator.clipboard.writeText(reply).catch(()=>{});
+  // Copy first, before window.open steals focus
+  copyReply(reply).then(ok => {
+    showToast(ok ? "Reply copied — opening WhatsApp…"
+                 : "Full reply is pre-typed in WhatsApp, ready to send.");
+  });
   if (state.sendVia === "email") {
     const url = "https://mail.google.com/mail/?view=cm&fs=1"
       + "&to=" + encodeURIComponent(contact)
