@@ -1,1 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intake & Booking — Phoenix</title>
+<!-- Google sign-in (client-side OAuth) -->
+<script src="https://accounts.google.com/gsi/client" async></script>
+<style>
+  :root {
+    --bg: #f3f1ec;
+    --paper: #fbfaf7;
+    --ink: #2b2a28;
+    --ink-soft: #6f6b63;
+    --line: #ddd8cf;
+    --accent: #5b6b5a;       /* sage, the still-water green */
+    --accent-soft: #e7ebe5;
+    --warn: #a8643c;          /* terracotta for the "check this" state */
+    --warn-soft: #f3e6dc;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(43,42,40,.04), 0 8px 30px rgba(43,42,40,.06);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 48px 24px 80px; }
+  header { margin-bottom: 36px; }
+  .eyebrow {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 10px;
+  }
+  h1 { font-size: 30px; font-weight: 500; margin: 0; letter-spacing: -.01em; }
+  .sub { color: var(--ink-soft); margin: 6px 0 0; font-size: 15px; }
 
+  .card {
+    background: var(--paper); border: 1px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 22px; margin-bottom: 20px;
+  }
+  .card h2 {
+    font-size: 13px; font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft);
+    margin: 0 0 14px; font-weight: 600;
+  }
+  .step-tag {
+    display:inline-block; font-family: ui-monospace, Menlo, monospace; font-size:11px;
+    letter-spacing:.1em; color:var(--accent); background:var(--accent-soft);
+    padding:2px 8px; border-radius:6px; margin-right:8px;
+  }
+
+  textarea {
+    width: 100%; min-height: 96px; resize: vertical;
+    border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
+    font-family: inherit; font-size: 15px; color: var(--ink); background: #fff;
+  }
+  textarea:focus, input:focus, select:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+
+  .btn {
+    appearance: none; border: none; cursor: pointer; font-family: inherit;
+    font-size: 15px; padding: 11px 20px; border-radius: 10px;
+    background: var(--accent); color: #fff; transition: opacity .15s;
+  }
+  .btn:hover { opacity: .9; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+  .btn-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+
+  .hidden { display: none; }
+
+  /* review grid */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+  .field label {
+    display: block; font-size: 12px; color: var(--ink-soft);
+    margin-bottom: 5px; font-family: ui-monospace, Menlo, monospace; letter-spacing: .04em;
+  }
+  .field input, .field select {
+    width: 100%; border: 1px solid var(--line); border-radius: 9px;
+    padding: 10px 12px; font-family: inherit; font-size: 15px; background: #fff; color: var(--ink);
+  }
+  .field.guessed input, .field.guessed select { border-color: var(--warn); background: var(--warn-soft); }
+
+  .channel-toggle, .clienttype { display: flex; gap: 8px; margin-bottom: 16px; }
+  .pill {
+    flex: 1; text-align: center; padding: 9px; border: 1px solid var(--line);
+    border-radius: 9px; cursor: pointer; font-size: 14px; background: #fff; color: var(--ink-soft);
+    user-select: none;
+  }
+  .pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .invite-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px; flex-wrap:wrap; }
+  .invite-label { font-size:14px; color:var(--ink-soft); }
+  .mini-toggle { display:flex; gap:6px; }
+  .pill.mini { flex:none; padding:6px 16px; font-size:13px; }
+
+  .avail { font-size: 14px; padding: 10px 14px; border-radius: 9px; margin: 16px 0; }
+  .avail.free { background: var(--accent-soft); color: var(--accent); }
+  .avail.busy { background: var(--warn-soft); color: var(--warn); }
+  .avail.checking { background: #efece6; color: var(--ink-soft); }
+  .slots { font-size:13px; color:var(--ink-soft); margin:-6px 0 16px; }
+  .slots b { color:var(--accent); font-weight:600; }
+
+  .reply-preview {
+    width: 100%; min-height: 120px; border: 1px solid var(--line);
+    border-radius: 10px; padding: 14px; font-family: inherit; font-size: 15px;
+    background: #fff; color: var(--ink); resize: vertical;
+  }
+  .meta { font-size: 13px; color: var(--ink-soft); margin-top: 8px; }
+  .intake-note { font-size: 13px; color: var(--ink-soft); margin-top: 10px; padding: 10px 12px; background: #efece6; border-radius: 8px; }
+  .event-link { font-size: 14px; margin-top: 12px; padding: 12px 14px; background: var(--accent-soft); border-radius: 9px; color: var(--accent); }
+  .event-link a { color: var(--accent); font-weight: 600; }
+  .draft-by { font-size:12px; color:var(--ink-soft); margin-top:8px; font-family:ui-monospace,Menlo,monospace; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: #fff; padding: 14px 22px; border-radius: 10px;
+    font-size: 14px; box-shadow: var(--shadow); opacity: 0; transition: opacity .25s, transform .25s;
+    pointer-events: none; max-width: 90%; text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+  .spinner { display:inline-block; width:14px; height:14px; border:2px solid var(--ink-soft); border-top-color:transparent; border-radius:50%; animation:spin .7s linear infinite; vertical-align:-2px; margin-right:6px;}
+  @keyframes spin { to { transform: rotate(360deg);} }
+
+  /* tab nav */
+  .tabs { display:flex; gap:6px; margin-bottom:28px; border-bottom:1px solid var(--line); }
+  .tab {
+    appearance:none; background:none; border:none; cursor:pointer; font-family:inherit;
+    font-size:14px; color:var(--ink-soft); padding:10px 14px; border-bottom:2px solid transparent;
+    margin-bottom:-1px;
+  }
+  .tab.active { color:var(--accent); border-bottom-color:var(--accent); font-weight:600; }
+
+  /* status dot */
+  .status-row { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ink-soft); margin-top:6px; }
+  .dot { width:9px; height:9px; border-radius:50%; flex:none; }
+  .dot.off { background:#c9c3b8; }
+  .dot.on  { background:#5b6b5a; }
+  .dot.warn{ background:#a8643c; }
+  .help { font-size:12px; color:var(--ink-soft); margin:6px 0 0; line-height:1.5; }
+  .save-bar { font-size:12px; color:var(--accent); margin-top:4px; height:16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Intake &amp; Booking</p>
+    <h1>A still point for the next client</h1>
+    <p class="sub">Paste their message. I'll check your calendar and draft a reply. Approve when it's right.</p>
+    <p style="font-size:11px;color:#9a9488;margin-top:4px;">build 2026-06-24g · two-step flow · Claude-drafted replies</p>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="booking">Booking</button>
+    <button class="tab" data-tab="settings">Settings</button>
+  </nav>
+
+  <!-- ============ BOOKING VIEW ============ -->
+  <div id="bookingView">
+
+  <!-- STEP 1: PASTE -->
+  <div class="card" id="pasteCard">
+    <h2><span class="step-tag">Step 1</span> The message</h2>
+    <div class="channel-toggle" id="channelToggle">
+      <div class="pill active" data-channel="whatsapp">From WhatsApp</div>
+      <div class="pill" data-channel="gmail">From Gmail</div>
+    </div>
+    <textarea id="msgInput" placeholder="Paste the client's message here…">Hi there : can I book a session at waterloo on Wednesday afternoon next week about 3.00pm ? Graham</textarea>
+    <div class="btn-row">
+      <button class="btn" id="checkBtn">Check availability &amp; draft reply</button>
+    </div>
+    <p class="help">Reads the message, checks your calendar for that day, and drafts a warm reply that fits what's actually free.</p>
+  </div>
+
+  <!-- STEP 2: REVIEW -->
+  <div class="card hidden" id="reviewCard">
+    <h2><span class="step-tag">Step 2</span> What I worked out — correct anything in orange</h2>
+
+    <div class="grid" style="margin-bottom:16px;">
+      <div class="field">
+        <label>Client name</label>
+        <input id="fName" type="text">
+      </div>
+      <div class="field" id="contactField">
+        <label id="contactLabel">WhatsApp number</label>
+        <input id="fContact" type="text" placeholder="+44…">
+      </div>
+    </div>
+
+    <label style="display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-family:ui-monospace,Menlo,monospace;">Client type</label>
+    <div class="clienttype" id="clientType">
+      <div class="pill" data-type="new">New client</div>
+      <div class="pill" data-type="returning">Returning</div>
+    </div>
+
+    <div class="grid">
+      <div class="field" id="locField">
+        <label>Location</label>
+        <select id="fLoc">
+          <option value="Breathe London Wellbeing, Waterloo SE1">Waterloo — Breathe London (SE1)</option>
+          <option value="Community Clinic, Cambridge Heath Road, Bethnal Green E2">Bethnal Green — Community Clinic (E2)</option>
+        </select>
+      </div>
+      <div class="field" id="durField">
+        <label>Duration</label>
+        <select id="fDur">
+          <option value="60">60 minutes</option>
+          <option value="90">90 minutes</option>
+        </select>
+      </div>
+      <div class="field" id="dateField">
+        <label>Date</label>
+        <input id="fDate" type="date">
+      </div>
+      <div class="field" id="timeField">
+        <label>Start time</label>
+        <input id="fTime" type="time">
+      </div>
+    </div>
+
+    <div class="avail checking" id="avail">Select a slot to check availability.</div>
+    <div class="slots hidden" id="slots"></div>
+
+    <div class="btn-row">
+      <button class="btn ghost" id="recheckBtn">Re-check &amp; re-draft</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: REPLY -->
+  <div class="card hidden" id="replyCard">
+    <h2><span class="step-tag">Step 3</span> Reply &amp; book</h2>
+    <div class="channel-toggle" id="sendVia">
+      <div class="pill active" data-send="copy">Copy for WhatsApp</div>
+      <div class="pill" data-send="email">Send via Gmail</div>
+    </div>
+    <div class="invite-row">
+      <span class="invite-label">Add "you'll get a calendar invite" line</span>
+      <div class="mini-toggle" id="inviteToggle">
+        <div class="pill mini" data-invite="on">On</div>
+        <div class="pill mini active" data-invite="off">Off</div>
+      </div>
+    </div>
+    <p class="help" id="inviteHelp">Off by default. This only changes the wording in the reply — your event is still created on your calendar, and (in Gmail mode) the client still gets the real invite to accept.</p>
+    <textarea class="reply-preview" id="replyText"></textarea>
+    <p class="draft-by" id="draftBy"></p>
+    <div class="intake-note hidden" id="intakeNote"></div>
+    <div class="meta" id="eventMeta"></div>
+    <div class="event-link hidden" id="eventLink"></div>
+    <div class="btn-row">
+      <button class="btn ghost" id="redraftBtn">Re-draft this reply</button>
+      <button class="btn" id="confirmBtn">Confirm time, add form &amp; book</button>
+    </div>
+    <p class="help" id="bookHelp">Step 3 confirms the time the client picked: it re-drafts a confirmation (with the intake form link for new clients), creates the event on your calendar, and opens WhatsApp/Gmail with the reply pre-typed. Enter the client's number with country code (e.g. 44 7700…) so WhatsApp opens the right chat. To send the real calendar invite, switch to "Send via Gmail" and add their email.</p>
+  </div>
+
+  </div><!-- /bookingView -->
+
+  <!-- ============ SETTINGS VIEW ============ -->
+  <div id="settingsView" class="hidden">
+
+    <div class="card">
+      <h2>Connections</h2>
+
+      <div style="margin-bottom:18px;">
+        <strong style="font-size:14px;">Google Calendar</strong>
+        <div class="status-row"><span class="dot off" id="calDot"></span><span id="calStatus">Not connected</span></div>
+        <p class="help">Sign in once with the Google account that holds your calendars. The page then checks free/busy and creates events directly. Sign-in lasts about an hour, then tap Connect again. <br><button class="btn ghost" id="calBtn" style="margin-top:8px;padding:8px 14px;font-size:13px;">Connect Google Calendar</button> <button class="btn ghost" id="calSignOut" style="margin-top:8px;padding:8px 14px;font-size:13px;display:none;">Sign out</button></p>
+      </div>
+
+      <div style="margin-bottom:18px;">
+        <strong style="font-size:14px;">Claude (reply drafting)</strong>
+        <div class="status-row"><span class="dot off" id="aiDot"></span><span id="aiStatus">Not connected</span></div>
+        <p class="help">Replies are written by Claude through your Cloudflare Worker so your API key stays private. Paste the Worker URL below and Save. Without it, the page falls back to a plain template. <em>See WORKER-SETUP.md.</em></p>
+        <div class="field" style="margin-top:8px;">
+          <label>Worker URL</label>
+          <input id="setWorker" type="text" placeholder="https://cstl-booking-ai.YOURNAME.workers.dev">
+        </div>
+      </div>
+
+      <div style="margin-bottom:18px;">
+        <strong style="font-size:14px;">WhatsApp</strong>
+        <div class="status-row"><span class="dot on"></span><span>Handoff ready — replies open in WhatsApp via deep link</span></div>
+        <p class="help">No API needed. Approving a booking opens WhatsApp with the reply pre-typed. <em>WhatsApp clients can't get a Google invite unless you also have their email — without it, the event is created on your calendar only.</em></p>
+      </div>
+
+      <div>
+        <strong style="font-size:14px;">Gmail</strong>
+        <div class="status-row"><span class="dot on"></span><span>Handoff ready — replies open a Gmail compose window</span></div>
+        <p class="help">Pre-fills recipient, subject and body. You hit send. With an email on the booking, the client also gets the calendar invite to accept.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Booking defaults</h2>
+      <div class="field" style="margin-bottom:16px;">
+        <label>Intake form link (for new clients)</label>
+        <input id="setIntake" type="text" placeholder="https://forms.gle/…">
+      </div>
+      <div class="grid">
+        <div class="field">
+          <label>Location 1</label>
+          <input id="setLoc1" type="text">
+        </div>
+        <div class="field">
+          <label>Location 2</label>
+          <input id="setLoc2" type="text">
+        </div>
+        <div class="field">
+          <label>Default duration</label>
+          <select id="setDur">
+            <option value="60">60 minutes</option>
+            <option value="90">90 minutes</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Your sign-off</label>
+          <input id="setSignoff" type="text" placeholder="Phoenix x">
+        </div>
+      </div>
+      <div class="field" style="margin-top:16px;">
+        <label>Working hours (for finding free slots)</label>
+        <div class="grid">
+          <input id="setDayStart" type="time" value="09:00">
+          <input id="setDayEnd" type="time" value="18:00">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="saveSettings">Save settings</button>
+      </div>
+      <div class="save-bar" id="saveBar"></div>
+    </div>
+
+  </div><!-- /settingsView -->
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// =====================================================================
+//  CONFIG — Google OAuth for the calendar. The Claude API key is NOT here:
+//  it lives in your Cloudflare Worker as a secret. Set the Worker URL in
+//  Settings (or below). See WORKER-SETUP.md.
+// =====================================================================
+const CONFIG = {
+  GOOGLE_CLIENT_ID: "313104627584-bvabn7550jrr7m8q9popr0r5t2vr0fkt.apps.googleusercontent.com",
+  CALENDAR_ID: "primary",               // which calendar to create events on
+  TIMEZONE: "Europe/London",
+  SCOPES: "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly",
+  WORKER_URL: ""                        // optional default; Settings overrides this
+};
+
+// ---------- SETTINGS (persisted in this browser) ----------
+const DEFAULTS = {
+  intake: "https://forms.gle/your-intake-form",
+  loc1: "Breathe London Wellbeing, Waterloo SE1",
+  loc2: "Community Clinic, Cambridge Heath Road, Bethnal Green E2",
+  dur: "60",
+  signoff: "Phoenix x",
+  calInvite: false,       // include the "you'll get a calendar invite" line in the reply
+  worker: "",             // Cloudflare Worker URL that proxies Claude
+  dayStart: "09:00",
+  dayEnd: "18:00"
+};
+let settings = loadSettings();
+
+function loadSettings() {
+  try { return Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem("cstlSettings") || "{}")); }
+  catch (e) { return Object.assign({}, DEFAULTS); }
+}
+function saveSettingsToStore() {
+  localStorage.setItem("cstlSettings", JSON.stringify(settings));
+}
+function workerUrl() { return (settings.worker || CONFIG.WORKER_URL || "").trim().replace(/\/$/, ""); }
+
+const LOCATIONS = { get waterloo(){return settings.loc1;}, get bethnal(){return settings.loc2;} };
+const state = {
+  channel: "whatsapp",
+  clientType: "new",
+  sendVia: "copy",
+  calInvite: settings.calInvite,
+  parsed: {},
+  lastEvent: null,
+  lastAvail: null,        // { free, reason, freeWindows: [...] }
+  stage: "offer"          // "offer" (step 1) or "confirm" (step 3)
+};
+
+// =====================================================================
+//  CLAUDE via Cloudflare Worker
+// =====================================================================
+function aiReady() { return !!workerUrl(); }
+function setAiStatus() {
+  const dot = $("aiDot"), st = $("aiStatus");
+  if (!dot) return;
+  if (aiReady()) { dot.className = "dot on"; st.textContent = "Connected — Claude drafts your replies"; }
+  else { dot.className = "dot off"; st.textContent = "Not connected — using plain template (add Worker URL)"; }
+}
+
+async function askClaude(system, user) {
+  const url = workerUrl();
+  if (!url) throw new Error("no-worker");
+  const r = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ system, user, max_tokens: 400 })
+  });
+  if (!r.ok) throw new Error("worker " + r.status + ": " + await r.text());
+  const j = await r.json();
+  if (j.error) throw new Error(typeof j.error === "string" ? j.error : JSON.stringify(j.error));
+  return (j.text || "").trim();
+}
+
+// Shared voice instructions. (Phoenix dislikes generic AI phrasing.)
+const VOICE = [
+  "You write short, warm, human replies for Phoenix, a craniosacral therapist in London.",
+  "British English. Use contractions. Sound calm and unhurried, never salesy or corporate.",
+  "Hard bans: no em dashes, no 'I hope this finds you well', no 'reach out', no 'happy to', no exclamation overload, no emoji, no preamble like 'Sure' or 'Of course', no sign-off other than the one given.",
+  "2 to 4 short sentences. Do not invent details that are not provided. Return ONLY the message text, nothing else."
+].join(" ");
+
+function describeAvail() {
+  const a = state.lastAvail;
+  if (!a) return "Availability unknown.";
+  if (a.free) return "The requested slot IS free on the calendar.";
+  let s = "The requested slot is NOT free (" + (a.reason || "clash") + ").";
+  if (a.freeWindows && a.freeWindows.length) {
+    s += " Free times that day: " + a.freeWindows.map(w => w.label).join(", ") + ".";
+  }
+  return s;
+}
+
+// =====================================================================
+//  GOOGLE CALENDAR — client-side OAuth + REST calls
+// =====================================================================
+let tokenClient = null;
+let googleToken = null;   // { access_token, expiry }
+
+function setCalStatus(kind, msg) {
+  const dot = $("calDot"), st = $("calStatus");
+  if (dot) dot.className = "dot " + kind;       // off | on | warn
+  if (st) st.textContent = msg;
+  const out = $("calSignOut");
+  if (out) out.style.display = (kind === "on") ? "inline-block" : "none";
+}
+function googleReady() { return !!(window.google && google.accounts && google.accounts.oauth2); }
+function tokenValid() { return googleToken && Date.now() < (googleToken.expiry - 60000); }
+
+function initGoogle() {
+  if (!CONFIG.GOOGLE_CLIENT_ID) {
+    setCalStatus("off", "Add your Client ID in the code (CONFIG.GOOGLE_CLIENT_ID)");
+    return;
+  }
+  if (!googleReady()) { setTimeout(initGoogle, 400); return; }
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CONFIG.GOOGLE_CLIENT_ID,
+    scope: CONFIG.SCOPES,
+    callback: (resp) => {
+      if (resp.error) { setCalStatus("warn", "Sign-in failed: " + resp.error); return; }
+      googleToken = { access_token: resp.access_token, expiry: Date.now() + (resp.expires_in * 1000) };
+      setCalStatus("on", "Connected — events will be created live");
+      if (pendingAfterAuth) { const fn = pendingAfterAuth; pendingAfterAuth = null; fn(); }
+      else checkAvailability();
+    }
+  });
+  setCalStatus("off", "Ready — tap Connect Google Calendar");
+}
+
+let pendingAfterAuth = null;
+function connectGoogle(after) {
+  if (!CONFIG.GOOGLE_CLIENT_ID) { showToast("Add your Google Client ID in the code first (see SETUP.md)."); return; }
+  if (!tokenClient) { initGoogle(); if (!tokenClient) { showToast("Google sign-in still loading — try again in a moment."); return; } }
+  pendingAfterAuth = after || null;
+  tokenClient.requestAccessToken({ prompt: googleToken ? "" : "consent" });
+}
+function signOutGoogle() {
+  if (googleToken && googleReady()) { try { google.accounts.oauth2.revoke(googleToken.access_token); } catch(e){} }
+  googleToken = null;
+  setCalStatus("off", "Signed out");
+}
+
+// freeBusy check + free-window finder across the working day
+async function realAvailability(dateISO, time, durMin) {
+  const start = new Date(`${dateISO}T${time}:00`);
+  const end = new Date(start.getTime() + durMin * 60000);
+  const dayStart = new Date(`${dateISO}T${settings.dayStart}:00`);
+  const dayEnd = new Date(`${dateISO}T${settings.dayEnd}:00`);
+  const body = {
+    timeMin: dayStart.toISOString(), timeMax: dayEnd.toISOString(),
+    timeZone: CONFIG.TIMEZONE, items: [{ id: CONFIG.CALENDAR_ID }]
+  };
+  const r = await fetch("https://www.googleapis.com/calendar/v3/freeBusy", {
+    method: "POST",
+    headers: { "Authorization": "Bearer " + googleToken.access_token, "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error("freeBusy " + r.status + ": " + await r.text());
+  const j = await r.json();
+  const busy = ((j.calendars && j.calendars[CONFIG.CALENDAR_ID] && j.calendars[CONFIG.CALENDAR_ID].busy) || [])
+    .map(b => ({ s: new Date(b.start), e: new Date(b.end) }));
+
+  // Is the requested slot clear?
+  const clash = busy.some(b => start < b.e && end > b.s);
+
+  // Find free windows in the working day that fit the duration
+  const freeWindows = [];
+  let cursor = new Date(dayStart);
+  const sorted = busy.slice().sort((a, b) => a.s - b.s);
+  for (const b of sorted) {
+    if (b.s > cursor) addWindow(freeWindows, cursor, new Date(Math.min(b.s, dayEnd)), durMin);
+    if (b.e > cursor) cursor = new Date(b.e);
+    if (cursor >= dayEnd) break;
+  }
+  if (cursor < dayEnd) addWindow(freeWindows, cursor, dayEnd, durMin);
+
+  return clash
+    ? { free: false, reason: "you already have something booked then", freeWindows }
+    : { free: true, freeWindows };
+}
+function addWindow(arr, s, e, durMin) {
+  if ((e - s) >= durMin * 60000) {
+    arr.push({ start: s, end: e, label: fmtTime(hhmm(s)) + "–" + fmtTime(hhmm(e)) });
+  }
+}
+function hhmm(d) { return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0"); }
+
+// create the real event
+async function createCalendarEvent() {
+  const start = new Date(`${$("fDate").value}T${$("fTime").value}:00`);
+  const end = new Date(start.getTime() + parseInt($("fDur").value, 10) * 60000);
+  const name = $("fName").value || "Client";
+  const isNew = state.clientType === "new";
+  const clientEmail = (state.sendVia === "email") ? $("fContact").value.trim() : "";
+
+  const ev = {
+    summary: `CST Session — ${name}${isNew ? " (new client)" : ""}`,
+    location: $("fLoc").value,
+    description: "Craniosacral therapy session — booked via the intake page.",
+    start: { dateTime: start.toISOString(), timeZone: CONFIG.TIMEZONE },
+    end:   { dateTime: end.toISOString(),   timeZone: CONFIG.TIMEZONE },
+    colorId: "2"
+  };
+  if (clientEmail) ev.attendees = [{ email: clientEmail }];
+  const sendUpdates = clientEmail ? "all" : "none";   // emails the client their invite
+
+  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CONFIG.CALENDAR_ID)}/events?sendUpdates=${sendUpdates}`;
+  const r = await fetch(url, {
+    method: "POST",
+    headers: { "Authorization": "Bearer " + googleToken.access_token, "Content-Type": "application/json" },
+    body: JSON.stringify(ev)
+  });
+  if (!r.ok) throw new Error("create event " + r.status + ": " + await r.text());
+  return await r.json();
+}
+
+// ---------- MESSAGE PARSER (fills the structured fields) ----------
+function parseMessage(msg) {
+  const lower = msg.toLowerCase();
+  const nameMatch = msg.match(/([A-Z][a-z]+)\s*$/);
+  const name = nameMatch ? nameMatch[1] : "";
+  const loc = lower.includes("bethnal") ? LOCATIONS.bethnal : LOCATIONS.waterloo;
+  const date = nextWeekday(3); // Wednesday default
+  let time = "15:00";
+  const t = lower.match(/(\d{1,2})[.:]?(\d{2})?\s*(am|pm)?/);
+  if (t) {
+    let h = parseInt(t[1], 10);
+    const m = t[2] ? t[2] : "00";
+    if (lower.includes("afternoon") && h < 12) h += 12;
+    if (t[3] === "pm" && h < 12) h += 12;
+    time = String(h).padStart(2, "0") + ":" + m;
+  }
+  return {
+    name, clientType: "new", location: loc, date, time, duration: settings.dur,
+    guessed: ["clientType", time === "15:00" ? "time" : null].filter(Boolean)
+  };
+}
+
+function nextWeekday(target) {
+  const d = new Date();
+  const day = d.getDay();
+  const result = new Date(d);
+  result.setDate(d.getDate() + ((target - day + 7) % 7 || 7));
+  return result.toISOString().slice(0, 10);
+}
+
+// ---------- AVAILABILITY (real if connected, simulated otherwise) ----------
+async function availability(dateISO, time, durMin) {
+  if (tokenValid()) return realAvailability(dateISO, time, durMin);
+  // fallback so the page still demonstrates without Google connected
+  return new Promise(res => setTimeout(() =>
+    res(time === "13:00"
+      ? { free:false, reason:"(simulated) a 13:00 session that day", simulated:true, freeWindows:[] }
+      : { free:true, simulated:true, freeWindows:[] }), 400));
+}
+
+// ---------- UI WIRING ----------
+const $ = id => document.getElementById(id);
+
+$("channelToggle").addEventListener("click", e => {
+  if (!e.target.dataset.channel) return;
+  state.channel = e.target.dataset.channel;
+  document.querySelectorAll("#channelToggle .pill").forEach(p => p.classList.toggle("active", p === e.target));
+});
+
+// ===== STEP 1: Check availability & draft offer =====
+$("checkBtn").addEventListener("click", async () => {
+  const msg = $("msgInput").value.trim();
+  if (!msg) return;
+  const btn = $("checkBtn");
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Reading…';
+  const p = parseMessage(msg);
+  state.parsed = p;
+  fillReview(p);
+  $("reviewCard").classList.remove("hidden");
+  $("replyCard").classList.remove("hidden");
+  await checkAvailability();          // sets state.lastAvail
+  await draftReply("offer");          // Claude offer draft (or template)
+  btn.disabled = false; btn.textContent = "Check availability & draft reply";
+  $("reviewCard").scrollIntoView({ behavior: "smooth" });
+});
+
+function fillReview(p) {
+  $("fName").value = p.name;
+  $("fLoc").value = p.location;
+  $("fDate").value = p.date;
+  $("fTime").value = p.time;
+  $("fDur").value = p.duration;
+  state.clientType = p.clientType;
+  document.querySelectorAll("#clientType .pill").forEach(pill =>
+    pill.classList.toggle("active", pill.dataset.type === p.clientType));
+  ["dateField","timeField","locField","durField"].forEach(f => $(f).classList.remove("guessed"));
+  const map = { date:"dateField", time:"timeField", location:"locField", duration:"durField" };
+  p.guessed.forEach(g => { if (map[g]) $(map[g]).classList.add("guessed"); });
+}
+
+$("clientType").addEventListener("click", e => {
+  if (!e.target.dataset.type) return;
+  state.clientType = e.target.dataset.type;
+  document.querySelectorAll("#clientType .pill").forEach(p => p.classList.toggle("active", p === e.target));
+});
+
+$("sendVia").addEventListener("click", e => {
+  if (!e.target.dataset.send) return;
+  state.sendVia = e.target.dataset.send;
+  document.querySelectorAll("#sendVia .pill").forEach(p => p.classList.toggle("active", p === e.target));
+  syncSendUi();
+});
+
+$("inviteToggle").addEventListener("click", e => {
+  if (!e.target.dataset.invite) return;
+  state.calInvite = e.target.dataset.invite === "on";
+  settings.calInvite = state.calInvite;
+  saveSettingsToStore();
+  syncInviteUi();
+});
+
+function syncInviteUi() {
+  document.querySelectorAll("#inviteToggle .pill").forEach(p =>
+    p.classList.toggle("active", (p.dataset.invite === "on") === state.calInvite));
+}
+
+function syncSendUi() {
+  const email = state.sendVia === "email";
+  $("confirmBtn").textContent = email ? "Confirm, add form & open Gmail" : "Confirm, add form & open WhatsApp";
+  $("contactLabel").textContent = email ? "Client email" : "WhatsApp number";
+  $("fContact").placeholder = email ? "name@email.com" : "+44…";
+}
+
+["fLoc","fDate","fTime","fDur","fName"].forEach(id =>
+  $(id).addEventListener("change", checkAvailability));
+
+// Re-check + re-draft offer (Step 2 button)
+$("recheckBtn").addEventListener("click", async () => {
+  await checkAvailability();
+  await draftReply("offer");
+});
+// Re-draft current stage (Step 3 button)
+$("redraftBtn").addEventListener("click", () => draftReply(state.stage));
+
+async function checkAvailability() {
+  const a = $("avail"), sl = $("slots");
+  a.className = "avail checking";
+  a.innerHTML = '<span class="spinner"></span>Checking your calendar…';
+  sl.classList.add("hidden");
+  try {
+    const r = await availability($("fDate").value, $("fTime").value, parseInt($("fDur").value,10));
+    state.lastAvail = r;
+    if (r.free) {
+      a.className = "avail free";
+      a.textContent = r.simulated ? "That slot looks free. (Connect Google for a real check.)" : "That slot is free on your calendar.";
+    } else {
+      a.className = "avail busy";
+      a.textContent = "Clash: " + r.reason + ".";
+    }
+    if (r.freeWindows && r.freeWindows.length) {
+      sl.classList.remove("hidden");
+      sl.innerHTML = "Free that day: " + r.freeWindows.map(w => "<b>" + w.label + "</b>").join(" · ");
+    }
+  } catch (e) {
+    state.lastAvail = null;
+    a.className = "avail busy";
+    a.textContent = "Couldn't check — " + e.message;
+  }
+}
+
+function fmtDate(iso) {
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString("en-GB", { weekday:"long", day:"numeric", month:"long" });
+}
+function fmtTime(t) {
+  const [h,m] = t.split(":").map(Number);
+  const ampm = h >= 12 ? "pm" : "am";
+  const hh = ((h+11)%12)+1;
+  return m ? `${hh}.${String(m).padStart(2,"0")}${ampm}` : `${hh}${ampm}`;
+}
+function shortLoc(loc) { return loc.includes("Waterloo") ? "Waterloo" : "Bethnal Green"; }
+
+// ===== Reply drafting: Claude first, template fallback =====
+async function draftReply(stage) {
+  state.stage = stage;
+  const ta = $("replyText");
+  const by = $("draftBy");
+  ta.value = ""; ta.placeholder = "Drafting…";
+  by.innerHTML = '<span class="spinner"></span>Asking Claude…';
+  updateMetaAndNote(stage);
+
+  const ctx = replyContext(stage);
+  if (aiReady()) {
+    try {
+      const text = await askClaude(ctx.system, ctx.user);
+      ta.value = text || templateReply(stage);
+      by.textContent = text ? "Drafted by Claude · edit freely before sending" : "Claude returned nothing — used template";
+      return;
+    } catch (e) {
+      ta.value = templateReply(stage);
+      by.textContent = "Claude unavailable (" + e.message + ") — used template";
+      return;
+    }
+  }
+  ta.value = templateReply(stage);
+  by.textContent = "Template draft — add a Worker URL in Settings for Claude-written replies";
+}
+
+function replyContext(stage) {
+  const name = $("fName").value || "there";
+  const date = fmtDate($("fDate").value);
+  const time = fmtTime($("fTime").value);
+  const loc = shortLoc($("fLoc").value);
+  const isNew = state.clientType === "new";
+  const wantInvite = state.sendVia === "email" && state.calInvite;
+  const fields = [
+    "Client name: " + name,
+    "Client type: " + (isNew ? "new (first session)" : "returning"),
+    "Location: " + loc,
+    "Date: " + date,
+    "Time: " + time,
+    "Channel: " + (state.channel === "gmail" ? "email" : "WhatsApp"),
+    "Sign off with exactly: " + settings.signoff,
+    "Original message from client: \"" + $("msgInput").value.trim() + "\""
+  ];
+  let task;
+  if (stage === "offer") {
+    fields.push("Calendar: " + describeAvail());
+    task = state.lastAvail && !state.lastAvail.free
+      ? "Write the FIRST reply. The requested time clashes, so apologise lightly and offer the free times listed above, asking which suits. Do not confirm a booking yet. Do not mention any intake form."
+      : "Write the FIRST reply. Warmly say the requested time works and you've pencilled them in, and invite them to confirm. Do not mention any intake form yet.";
+  } else {
+    if (wantInvite) fields.push("Mention they'll get a calendar invite to tap Yes on.");
+    if (isNew) fields.push("Intake form link (include naturally, ask them to fill it in before the first session): " + settings.intake);
+    task = "Write the CONFIRMATION reply. The client has chosen this time. Confirm it clearly and warmly."
+      + (isNew ? " Include the intake form link with a short line asking them to complete it before the first session." : " No form is needed.");
+  }
+  return {
+    system: VOICE + " " + task,
+    user: fields.join("\n")
+  };
+}
+
+function templateReply(stage) {
+  const name = $("fName").value || "there";
+  const date = fmtDate($("fDate").value);
+  const time = fmtTime($("fTime").value);
+  const loc = shortLoc($("fLoc").value);
+  const isNew = state.clientType === "new";
+
+  if (stage === "offer") {
+    if (state.lastAvail && !state.lastAvail.free) {
+      const opts = (state.lastAvail.freeWindows || []).map(w => w.label).join(", ");
+      return `Hi ${name}, lovely to hear from you. ${time} on ${date} is already taken, sorry. `
+        + (opts ? `I'm free ${opts} that day — would any of those suit?` : `Could you let me know another time that works and I'll check?`)
+        + ` ${settings.signoff}`;
+    }
+    return `Hi ${name}, lovely to hear from you. ${date} at ${time} at ${loc} works nicely, I've pencilled you in. Just let me know it's good for you and I'll confirm. ${settings.signoff}`;
+  }
+
+  // confirm
+  let inviteLine = "", intakeLine = "";
+  if (state.sendVia === "email" && state.calInvite) inviteLine = " You'll get a calendar invite, just tap Yes to confirm.";
+  if (isNew) intakeLine = ` As it's your first session, here's a short intake form to fill in before we meet: ${settings.intake}`;
+  return `Hi ${name}, that's confirmed: ${date} at ${time} at ${loc}.${inviteLine}${intakeLine} Looking forward to it. ${settings.signoff}`;
+}
+
+function updateMetaAndNote(stage) {
+  const name = $("fName").value || "there";
+  const date = fmtDate($("fDate").value);
+  const time = fmtTime($("fTime").value);
+  const loc = shortLoc($("fLoc").value);
+  const isNew = state.clientType === "new";
+  const note = $("intakeNote");
+
+  if (stage === "confirm" && isNew) {
+    note.classList.remove("hidden");
+    note.textContent = state.channel === "gmail"
+      ? "New client: intake form link included in the confirmation."
+      : "New client via WhatsApp: the intake form link is in the confirmation message.";
+  } else {
+    note.classList.add("hidden");
+  }
+  $("eventMeta").textContent =
+    `Event: CST Session — ${name}${isNew ? " (new client)" : ""}, ${loc} · ${date}, ${time} · ${$("fDur").value} min`;
+}
+
+// ===== STEP 3: Confirm time, add form, create event, hand off =====
+$("confirmBtn").addEventListener("click", () => {
+  if (state.lastAvail && state.lastAvail.free === false) {
+    showToast("That slot still clashes — change the time or re-check before booking.");
+    return;
+  }
+  if (!tokenValid()) {
+    showToast("Connecting Google first…");
+    connectGoogle(doConfirm);
+    return;
+  }
+  doConfirm();
+});
+
+async function doConfirm() {
+  const btn = $("confirmBtn");
+  const original = btn.textContent;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Confirming…';
+  try {
+    // 1. Re-draft as a confirmation (adds form link for new clients)
+    await draftReply("confirm");
+    // 2. Create the calendar event
+    const event = await createCalendarEvent();
+    state.lastEvent = event;
+    const linkBox = $("eventLink");
+    linkBox.classList.remove("hidden");
+    const attendeeNote = (state.sendVia === "email" && $("fContact").value.trim())
+      ? " The client has been emailed an invite to accept." : "";
+    linkBox.innerHTML = `Event created on your calendar.${attendeeNote} <a href="${event.htmlLink}" target="_blank">Open it</a>`;
+    // 3. Hand off the reply
+    openReplyHandoff();
+  } catch (e) {
+    showToast("Couldn't complete: " + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = original;
+  }
+}
+
+function copyReply(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(text).then(()=>true).catch(()=>fallbackCopy(text));
+  }
+  return Promise.resolve(fallbackCopy(text));
+}
+function fallbackCopy(text) {
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed"; ta.style.top = "-9999px";
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch (e) { return false; }
+}
+
+function openReplyHandoff() {
+  if (!$("replyText").value.trim()) draftReply(state.stage);
+  const reply = $("replyText").value;
+  const contact = $("fContact").value.trim();
+  copyReply(reply).then(ok => {
+    showToast(ok ? "Reply copied — opening WhatsApp…"
+                 : "Full reply is pre-typed, ready to send.");
+  });
+  if (state.sendVia === "email") {
+    const url = "https://mail.google.com/mail/?view=cm&fs=1"
+      + "&to=" + encodeURIComponent(contact)
+      + "&su=" + encodeURIComponent("Your session booking")
+      + "&body=" + encodeURIComponent(reply);
+    window.open(url, "_blank");
+  } else {
+    const num = contact.replace(/[^\d]/g, "");
+    if (num) {
+      window.location.href = "whatsapp://send?phone=" + num + "&text=" + encodeURIComponent(reply);
+    } else {
+      window.open("https://wa.me/?text=" + encodeURIComponent(reply), "_blank");
+    }
+  }
+}
+
+function showToast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+// ---------- TABS ----------
+$("tabs").addEventListener("click", e => {
+  if (!e.target.dataset.tab) return;
+  const tab = e.target.dataset.tab;
+  document.querySelectorAll("#tabs .tab").forEach(t => t.classList.toggle("active", t === e.target));
+  $("bookingView").classList.toggle("hidden", tab !== "booking");
+  $("settingsView").classList.toggle("hidden", tab !== "settings");
+});
+
+// ---------- SETTINGS FORM ----------
+function fillSettingsForm() {
+  $("setIntake").value   = settings.intake;
+  $("setLoc1").value     = settings.loc1;
+  $("setLoc2").value     = settings.loc2;
+  $("setDur").value      = settings.dur;
+  $("setSignoff").value  = settings.signoff;
+  $("setWorker").value   = settings.worker;
+  $("setDayStart").value = settings.dayStart;
+  $("setDayEnd").value   = settings.dayEnd;
+}
+function applyLocationsToSelect() {
+  const sel = $("fLoc");
+  sel.options[0].value = settings.loc1; sel.options[0].textContent = shortLoc(settings.loc1) + " — " + settings.loc1;
+  sel.options[1].value = settings.loc2; sel.options[1].textContent = shortLoc(settings.loc2) + " — " + settings.loc2;
+}
+$("saveSettings").addEventListener("click", () => {
+  settings.intake   = $("setIntake").value.trim() || DEFAULTS.intake;
+  settings.loc1     = $("setLoc1").value.trim()   || DEFAULTS.loc1;
+  settings.loc2     = $("setLoc2").value.trim()   || DEFAULTS.loc2;
+  settings.dur      = $("setDur").value;
+  settings.signoff  = $("setSignoff").value.trim() || DEFAULTS.signoff;
+  settings.worker   = $("setWorker").value.trim();
+  settings.dayStart = $("setDayStart").value || DEFAULTS.dayStart;
+  settings.dayEnd   = $("setDayEnd").value || DEFAULTS.dayEnd;
+  saveSettingsToStore();
+  applyLocationsToSelect();
+  $("fDur").value = settings.dur;
+  setAiStatus();
+  $("saveBar").textContent = "Saved.";
+  setTimeout(() => $("saveBar").textContent = "", 1800);
+});
+
+$("calBtn").addEventListener("click", () => connectGoogle());
+$("calSignOut").addEventListener("click", signOutGoogle);
+
+// ---------- INIT ----------
+fillSettingsForm();
+applyLocationsToSelect();
+$("fDur").value = settings.dur;
+syncSendUi();
+syncInviteUi();
+setAiStatus();
+initGoogle();
+</script>
+</body>
+</html>
