@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Intake & Booking — Phoenix</title>
-<!-- Google sign-in (client-side OAuth) -->
 <script src="https://accounts.google.com/gsi/client" async></script>
 <style>
   :root {
@@ -13,9 +12,9 @@
     --ink: #2b2a28;
     --ink-soft: #6f6b63;
     --line: #ddd8cf;
-    --accent: #5b6b5a;       /* sage, the still-water green */
+    --accent: #5b6b5a;
     --accent-soft: #e7ebe5;
-    --warn: #a8643c;          /* terracotta for the "check this" state */
+    --warn: #a8643c;
     --warn-soft: #f3e6dc;
     --radius: 14px;
     --shadow: 0 1px 2px rgba(43,42,40,.04), 0 8px 30px rgba(43,42,40,.06);
@@ -29,7 +28,7 @@
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 720px; margin: 0 auto; padding: 48px 24px 96px; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 48px 24px 96px; }
   header { margin-bottom: 28px; }
   .eyebrow {
     font-family: ui-monospace, "SF Mono", Menlo, monospace;
@@ -73,7 +72,7 @@
   .btn.big { width: 100%; padding: 15px; font-size: 16px; }
   .btn-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 
-  .hidden { display: none; }
+  .hidden { display: none !important; }
 
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   @media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
@@ -112,7 +111,6 @@
   .spinner { display:inline-block; width:14px; height:14px; border:2px solid var(--ink-soft); border-top-color:transparent; border-radius:50%; animation:spin .7s linear infinite; vertical-align:-2px; margin-right:6px;}
   @keyframes spin { to { transform: rotate(360deg);} }
 
-  /* tab nav */
   .tabs { display:flex; gap:6px; margin-bottom:24px; border-bottom:1px solid var(--line); }
   .tab {
     appearance:none; background:none; border:none; cursor:pointer; font-family:inherit;
@@ -121,7 +119,6 @@
   }
   .tab.active { color:var(--accent); border-bottom-color:var(--accent); font-weight:600; }
 
-  /* status dot */
   .status-row { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ink-soft); margin-top:6px; }
   .dot { width:9px; height:9px; border-radius:50%; flex:none; }
   .dot.off { background:#c9c3b8; }
@@ -129,48 +126,10 @@
   .dot.warn{ background:#a8643c; }
   .save-bar { font-size:12px; color:var(--accent); margin-top:4px; height:16px; }
 
-  /* ---- 3-day picker grid ---- */
-  .pick-bar { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
-  .pick-bar .btn { padding:7px 14px; font-size:14px; }
-  .pick-title { font-size:14px; color:var(--ink); font-weight:600; flex:1; text-align:center; }
-  .pick-grid {
-    display:grid; grid-template-columns:52px repeat(3, 1fr);
-    border:1px solid var(--line); border-radius:10px; overflow:hidden; background:#fff;
-  }
-  .pg-h {
-    padding:8px 4px; text-align:center; font-size:12px; font-weight:600; color:var(--ink);
-    border-left:1px solid var(--line); border-bottom:1px solid var(--line); background:#f6f4ef;
-  }
-  .pg-h.corner { background:#f6f4ef; }
-  .pg-h .dow { display:block; font-size:11px; color:var(--ink-soft); font-weight:400; }
-  .pg-time {
-    padding:6px 4px; text-align:right; font-size:11px; color:var(--ink-soft);
-    border-top:1px solid #efece6; font-family:ui-monospace,Menlo,monospace;
-    display:flex; align-items:center; justify-content:flex-end;
-  }
-  .pg-slot {
-    border-top:1px solid #efece6; border-left:1px solid var(--line);
-    min-height:42px; display:flex; align-items:center; justify-content:center;
-    font-size:13px; user-select:none;
-  }
-  .pg-slot.free { cursor:pointer; color:var(--accent); background:#fff; }
-  .pg-slot.free:hover { background:var(--accent-soft); }
-  .pg-slot.busy { color:#cfc9bd; background:#f5f3ee; cursor:not-allowed; }
-  .pg-slot.sel { background:var(--accent); color:#fff; font-weight:600; }
-  .pg-slot .tick { font-size:13px; }
-  .pick-empty { padding:24px; text-align:center; font-size:14px; color:var(--ink-soft); }
   .chips { margin:14px 0 0; font-size:13px; color:var(--ink-soft); }
   .chip { display:inline-block; background:var(--accent-soft); color:var(--accent); border-radius:7px;
           padding:4px 10px; margin:0 6px 6px 0; font-size:13px; }
   .chip b { font-weight:600; }
-
-  /* ---- My Calendar tab ---- */
-  .cal-bar { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
-  .cal-bar .btn { padding:7px 14px; font-size:14px; }
-  .cal-today { font-size:13px; }
-  .cal-heading { font-size:16px; font-weight:600; flex:1; text-align:center; color:var(--ink); }
-  .cal-heading small { display:block; font-size:11px; font-weight:400; color:var(--ink-soft);
-    font-family:ui-monospace,Menlo,monospace; letter-spacing:.04em; margin-top:2px; }
 
   /* calendar source toggles */
   .cal-toggles { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:16px; }
@@ -185,39 +144,109 @@
   .cal-toggle.locked { cursor:default; }
 
   /* week strip */
-  .week-strip { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-bottom:18px; }
+  .week-strip { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:16px; }
   .wk-day {
-    border:1px solid var(--line); border-radius:10px; background:#fff; cursor:pointer;
-    padding:7px 3px 8px; text-align:center; min-height:58px; display:flex; flex-direction:column;
-    align-items:center; gap:3px;
+    border:1px solid var(--line); border-radius:8px; background:#fff; cursor:pointer;
+    padding:5px 2px 6px; text-align:center; min-height:48px; display:flex; flex-direction:column;
+    align-items:center; gap:2px;
   }
-  .wk-day .wk-dow { font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); font-family:ui-monospace,Menlo,monospace; }
-  .wk-day .wk-num { font-size:16px; color:var(--ink); line-height:1; }
+  .wk-day .wk-dow { font-size:9px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); font-family:ui-monospace,Menlo,monospace; }
+  .wk-day .wk-num { font-size:15px; color:var(--ink); line-height:1; }
   .wk-day .wk-dots { display:flex; gap:2px; flex-wrap:wrap; justify-content:center; min-height:6px; }
   .wk-day .wk-dot { width:5px; height:5px; border-radius:50%; }
   .wk-day.sel { background:var(--accent); border-color:var(--accent); }
   .wk-day.sel .wk-dow, .wk-day.sel .wk-num { color:#fff; }
   .wk-day.today .wk-num { font-weight:700; }
   .wk-day.today:not(.sel) { border-color:var(--accent); }
+  .wk-day.offered:not(.sel) { background: #f5f8f4; }
 
-  /* agenda */
-  .agenda { border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff; }
-  .ag-row { display:flex; gap:12px; padding:12px 14px; border-top:1px solid #efece6; }
-  .ag-row:first-child { border-top:none; }
-  .ag-time { flex:none; width:88px; font-size:12px; color:var(--ink-soft);
-    font-family:ui-monospace,Menlo,monospace; line-height:1.4; }
-  .ag-time .ag-end { color:#b3ada1; }
-  .ag-body { flex:1; min-width:0; }
-  .ag-title { font-size:15px; color:var(--ink); }
-  .ag-meta { display:flex; align-items:center; gap:6px; margin-top:3px; flex-wrap:wrap; }
-  .ag-tag { display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--ink-soft);
-    font-family:ui-monospace,Menlo,monospace; }
-  .ag-tag .sw { width:8px; height:8px; border-radius:50%; flex:none; }
-  .ag-loc { font-size:12px; color:var(--ink-soft); }
-  .ag-mine { font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent);
-    background:var(--accent-soft); padding:1px 6px; border-radius:5px; font-family:ui-monospace,Menlo,monospace; }
-  .ag-allday { background:#f6f4ef; }
-  .cal-empty { padding:28px; text-align:center; font-size:14px; color:var(--ink-soft); }
+  /* nav bar */
+  .cal-bar { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+  .cal-bar .btn { padding:7px 14px; font-size:14px; }
+  .cal-heading { font-size:15px; font-weight:600; flex:1; text-align:center; color:var(--ink); }
+
+  /* booking banner */
+  .booking-banner {
+    background: var(--accent-soft); border: 1px solid #b5c8b3;
+    border-radius: 10px; padding: 10px 14px; margin-bottom: 16px;
+    font-size: 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .booking-banner b { color: var(--accent); }
+
+  /* ---- UNIFIED TIME-BLOCK GRID ---- */
+  .ucg-outer { margin-bottom: 4px; }
+  .ucg-allday-strip {
+    display: flex; margin-bottom: 0;
+    border: 1px solid var(--line); border-bottom: none;
+    border-radius: 10px 10px 0 0; overflow: hidden; background: #f6f4ef;
+  }
+  .ucg-allday-spacer { flex: none; width: 48px; border-right: 1px solid var(--line); padding: 4px 4px 4px 0; text-align: right; font-size: 10px; color: var(--ink-soft); font-family: ui-monospace, Menlo, monospace; letter-spacing:.03em; }
+  .ucg-allday-col { flex: 1; min-width: 0; padding: 4px; border-left: 1px solid var(--line); }
+  .ucg-allday-ev {
+    border-radius: 3px; padding: 1px 5px; font-size: 10px; color: #fff; margin-bottom: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .ucg-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .ucg { display: flex; }
+  .ucg-times { flex: none; width: 48px; padding-top: 40px; }
+  .ucg-time {
+    height: 28px; display: flex; align-items: flex-start;
+    justify-content: flex-end; padding-right: 6px;
+    font-size: 10px; color: var(--ink-soft);
+    font-family: ui-monospace, Menlo, monospace;
+    margin-top: -1px;
+  }
+  .ucg-cols {
+    flex: 1; display: flex; min-width: 0;
+    border: 1px solid var(--line); overflow: hidden;
+    border-radius: 0 0 10px 10px;
+  }
+  .ucg-cols.no-allday { border-radius: 10px; }
+  .ucg-col { flex: 1; min-width: 68px; border-left: 1px solid var(--line); }
+  .ucg-col:first-child { border-left: none; }
+  .ucg-col-head {
+    height: 40px; background: #f6f4ef;
+    border-bottom: 1px solid var(--line); text-align: center;
+    padding: 5px 2px; font-size: 12px; font-weight: 600; color: var(--ink);
+  }
+  .ucg-col-head .ucg-dow {
+    display: block; font-size: 9px; color: var(--ink-soft);
+    font-weight: 400; font-family: ui-monospace, Menlo, monospace;
+    letter-spacing: .06em; text-transform: uppercase;
+  }
+  .ucg-col-head.today { color: var(--accent); }
+  .ucg-col-head.today .ucg-dow { color: var(--accent); opacity: .75; }
+  .ucg-col-head.offered-day { background: #f0f5ef; }
+  .ucg-col-body { position: relative; background: #fff; }
+  .ucg-hline {
+    position: absolute; left: 0; right: 0; pointer-events: none;
+  }
+  .ucg-hline.hour { border-top: 1px solid #e8e4dc; }
+  .ucg-hline.half { border-top: 1px dashed #f0ede7; }
+
+  /* available booking slot */
+  .ucg-slot {
+    position: absolute; left: 2px; right: 2px;
+    border-radius: 5px; display: flex; align-items: center;
+    justify-content: center; font-size: 14px; font-weight: 600;
+    cursor: pointer; z-index: 1; transition: background .1s;
+  }
+  .ucg-slot.free { background: #eef3ed; color: var(--accent); border: 1px dashed #b5c8b3; }
+  .ucg-slot.free:hover { background: var(--accent-soft); border-color: var(--accent); }
+  .ucg-slot.sel { background: var(--accent); color: #fff; border: 1px solid var(--accent); }
+
+  /* event block */
+  .ucg-event {
+    position: absolute; left: 2px; right: 2px;
+    border-radius: 5px; padding: 3px 5px;
+    font-size: 11px; color: #fff; overflow: hidden; z-index: 2;
+    line-height: 1.3; pointer-events: none; box-shadow: 0 1px 3px rgba(0,0,0,.15);
+  }
+  .ucg-event .ev-t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ucg-event .ev-s { opacity: .85; font-size: 10px; }
+
+  .ucg-empty { padding: 32px; text-align: center; font-size: 14px; color: var(--ink-soft); }
 </style>
 </head>
 <body>
@@ -226,19 +255,19 @@
     <p class="eyebrow">Intake &amp; Booking</p>
     <h1>A still point for the next client</h1>
     <p class="sub">Paste their message. Read it, pick the times you want to offer, draft a reply.</p>
-    <p style="font-size:11px;color:#9a9488;margin-top:4px;">build 2026-06-25b · read-only · live availability + personal calendar overlay</p>
+    <p style="font-size:11px;color:#9a9488;margin-top:4px;">build 2026-06-25c · read-only · live availability + personal calendar overlay</p>
   </header>
 
   <nav class="tabs" id="tabs">
     <button class="tab active" data-tab="booking">Booking</button>
-    <button class="tab" data-tab="calendar">My calendar</button>
+    <button class="tab" data-tab="calendar">Calendar</button>
     <button class="tab" data-tab="settings">Settings</button>
   </nav>
 
   <!-- ============ BOOKING VIEW ============ -->
   <div id="bookingView">
 
-  <!-- STEP 1: MESSAGE + DETAILS -->
+  <!-- STEP 1 -->
   <div class="card" id="bookingCard">
     <h2><span class="step-tag">Step 1</span> The message</h2>
     <textarea id="msgInput" placeholder="Paste the client's message here…"></textarea>
@@ -247,9 +276,7 @@
     </div>
     <p class="help">I'll work out whether they're asking what's free or naming a time, pull out a name and the site, and guess new vs returning. Fix anything below, then find times.</p>
 
-    <!-- review fields appear here once the message is read -->
     <div id="reviewBlock" class="hidden" style="margin-top:22px;border-top:1px solid var(--line);padding-top:20px;">
-
       <label style="display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-family:ui-monospace,Menlo,monospace;">What does this message need?</label>
       <div class="clienttype" id="intentToggle">
         <div class="pill" data-intent="open">They're asking what's free</div>
@@ -277,32 +304,14 @@
       </div>
 
       <div class="btn-row">
-        <button class="btn" id="findBtn">Find times</button>
+        <button class="btn" id="findBtn">Find times →</button>
       </div>
     </div>
   </div>
 
-  <!-- STEP 2: PICK TIMES -->
-  <div class="card hidden" id="pickCard">
-    <h2><span class="step-tag">Step 2</span> Pick the times to offer</h2>
-    <div class="pick-bar">
-      <button class="btn ghost" id="pickPrev">‹</button>
-      <span class="pick-title" id="pickTitle"></span>
-      <button class="btn ghost" id="pickNext">›</button>
-    </div>
-    <div id="pickWrap">
-      <div class="pick-empty" id="pickEmpty">Connect Google Calendar (in Settings) to load live availability.</div>
-    </div>
-    <p class="help" id="pickHelp">Offered days are Mon/Wed/Thu/Fri, 11:00–20:30. Greyed slots are already booked. Tap the ones you want to offer — pick as many as you like. Travel-gap rules aren't auto-applied, so eyeball those.</p>
-    <div class="chips hidden" id="chips"></div>
-    <div class="btn-row">
-      <button class="btn" id="draftBtn" disabled>Draft reply</button>
-    </div>
-  </div>
-
-  <!-- STEP 3: REPLY -->
+  <!-- STEP 2: REPLY -->
   <div class="card hidden" id="replyCard">
-    <h2><span class="step-tag">Step 3</span> The reply</h2>
+    <h2><span class="step-tag">Step 2</span> The reply</h2>
     <textarea class="reply-preview" id="replyText"></textarea>
     <p class="draft-by" id="draftBy"></p>
     <div class="btn-row" style="margin-top:16px;">
@@ -317,25 +326,50 @@
 
   </div><!-- /bookingView -->
 
-  <!-- ============ MY CALENDAR VIEW ============ -->
+  <!-- ============ CALENDAR VIEW ============ -->
   <div id="calendarView" class="hidden">
     <div class="card">
+
+      <!-- Booking mode banner -->
+      <div class="booking-banner hidden" id="calBookingBanner">
+        <div style="flex:1;">
+          <b>Picking times</b> for <span id="bannerName">—</span> at <span id="bannerLoc">—</span><br>
+          <span style="font-size:12px;color:var(--ink-soft);">Tap a green slot to select it. Tap again to deselect. Pick as many as you like, then draft.</span>
+        </div>
+        <button class="btn ghost" id="bannerBack" style="padding:7px 12px;font-size:13px;">← Back</button>
+      </div>
+
+      <!-- Week nav -->
       <div class="cal-bar">
-        <button class="btn ghost" id="calPrevDay">‹</button>
+        <button class="btn ghost" id="calPrevWeek">‹</button>
         <div class="cal-heading" id="calHeading">—</div>
-        <button class="btn ghost" id="calNextDay">›</button>
+        <button class="btn ghost" id="calNextWeek">›</button>
       </div>
       <div style="text-align:center;margin-bottom:14px;">
-        <button class="btn ghost cal-today" id="calTodayBtn">Today</button>
+        <button class="btn ghost" id="calTodayBtn" style="padding:7px 14px;font-size:13px;">Today</button>
       </div>
 
+      <!-- Calendar source toggles -->
       <div class="cal-toggles" id="calToggles"></div>
+
+      <!-- Week strip -->
       <div class="week-strip" id="weekStrip"></div>
 
-      <div id="agendaWrap">
-        <div class="cal-empty" id="calEmpty">Connect Google Calendar (in Settings) to see what's on.</div>
+      <!-- Unified time-block grid -->
+      <div id="ucgWrap">
+        <div class="ucg-empty">Connect Google Calendar in Settings to see your schedule.</div>
       </div>
-      <p class="help" style="margin-top:14px;">Read-only view of your real bookings. Personal, Chalk Farm and Room 5 show by default — tick the other rooms to add them. The booking picker doesn't know about these, so glance here before offering Waterloo times, and leave yourself travel time between sites.</p>
+
+      <!-- Chips + Draft (shown in booking mode) -->
+      <div class="hidden" id="calPickSection" style="margin-top:18px;padding-top:16px;border-top:1px solid var(--line);">
+        <div class="chips hidden" id="chips"></div>
+        <div class="btn-row" style="margin-top:10px;">
+          <button class="btn" id="draftBtn" disabled>Draft reply</button>
+          <button class="btn ghost" id="clearSlotsBtn">Clear</button>
+        </div>
+      </div>
+
+      <p class="help" style="margin-top:14px;" id="calHelp">Your calendar — all events from connected sources shown as blocks. Offered days (Mon/Wed/Thu/Fri) have a light green header. When picking times, available slots appear as green outlines — tap to select.</p>
     </div>
   </div><!-- /calendarView -->
 
@@ -348,7 +382,7 @@
       <div style="margin-bottom:18px;">
         <strong style="font-size:14px;">Google Calendar</strong>
         <div class="status-row"><span class="dot off" id="calDot"></span><span id="calStatus">Not connected</span></div>
-        <p class="help">Sign in once with the account that can see your Waterloo room calendars and Chalk Farm. The grid then reads live availability. Sign-in lasts about an hour, then tap Connect again.<br>
+        <p class="help">Sign in once with the account that can see your Waterloo room calendars and Chalk Farm. The grid reads live availability. Sign-in lasts about an hour, then tap Connect again.<br>
         <button class="btn ghost" id="calBtn" style="margin-top:8px;padding:8px 14px;font-size:13px;">Connect Google Calendar</button>
         <button class="btn ghost" id="calSignOut" style="margin-top:8px;padding:8px 14px;font-size:13px;display:none;">Sign out</button></p>
       </div>
@@ -405,9 +439,7 @@
 
 <script>
 // =====================================================================
-//  CONFIG — Google OAuth + the venue calendars. The Claude API key is NOT
-//  here: it lives in your Cloudflare Worker as a secret. Set the Worker URL
-//  in Settings. See WORKER-SETUP.md.
+//  CONFIG
 // =====================================================================
 const CONFIG = {
   GOOGLE_CLIENT_ID: "313104627584-bvabn7550jrr7m8q9popr0r5t2vr0fkt.apps.googleusercontent.com",
@@ -416,19 +448,16 @@ const CONFIG = {
   WORKER_URL: ""
 };
 
-// Venues -> the Google calendars that decide availability.
-//  waterloo : free if AT LEAST ONE of the 5 rooms is open over the hour.
-//  chalkfarm: free if nothing overlaps on the shared studio calendar.
 const VENUES = {
   waterloo: {
     label: "Waterloo",
     mode: "anyRoom",
     cals: [
-      "gvoqr8veipj2rkph12d9n8h13o@group.calendar.google.com",                       // Room 1
-      "lsoq6nm8u6psnd42v4fnj0aaeo@group.calendar.google.com",                       // Room 2
-      "2k0mhoahhn64i1tr4iccg4e1gs@group.calendar.google.com",                       // Room 3
-      "6dlgvktkbomu7bf830a17dq7jo@group.calendar.google.com",                       // Room 4
-      "7cd19a8a0df5e5ff621f3400d0cc2ca78ee6b76b3d6f56740a4be51b03a3ec98@group.calendar.google.com" // Room 5
+      "gvoqr8veipj2rkph12d9n8h13o@group.calendar.google.com",
+      "lsoq6nm8u6psnd42v4fnj0aaeo@group.calendar.google.com",
+      "2k0mhoahhn64i1tr4iccg4e1gs@group.calendar.google.com",
+      "6dlgvktkbomu7bf830a17dq7jo@group.calendar.google.com",
+      "7cd19a8a0df5e5ff621f3400d0cc2ca78ee6b76b3d6f56740a4be51b03a3ec98@group.calendar.google.com"
     ]
   },
   chalkfarm: {
@@ -438,10 +467,12 @@ const VENUES = {
   }
 };
 
-const OFFERED_DOW = [1, 3, 4, 5];   // Mon, Wed, Thu, Fri
+const OFFERED_DOW = [1, 3, 4, 5];  // Mon, Wed, Thu, Fri
 const SLOT_MIN = 60;
+const HOUR_PX = 56;
+const HALF_PX = 28;
 
-// ---------- SETTINGS (persisted in this browser) ----------
+// ---------- SETTINGS ----------
 const DEFAULTS = {
   intake: "https://forms.gle/your-intake-form",
   loc1: "Breathe London Wellbeing, Waterloo SE1",
@@ -460,16 +491,15 @@ function loadSettings() {
 function saveSettingsToStore() { localStorage.setItem("cstlSettings", JSON.stringify(settings)); }
 function workerUrl() { return (settings.worker || CONFIG.WORKER_URL || "").trim().replace(/\/$/, ""); }
 function venueLocText(key) { return key === "chalkfarm" ? settings.loc2 : settings.loc1; }
+function toMin(t) { const [h, m] = t.split(":").map(Number); return h * 60 + m; }
 
 const state = {
   clientType: "new",
-  intent: "open",          // "open" (asking what's free) | "specific" (named a time)
+  intent: "open",
   parsed: {},
-  offeredDays: [],         // ISO list of upcoming offered weekdays
-  winIdx: 0,               // index into offeredDays for the leftmost visible day
-  busyByCal: {},           // calId -> [{s,e}] for the loaded window
-  loadedKey: "",           // venue+window signature already fetched
-  selected: []             // [{dateISO, hhmm, label}]
+  offeredDays: [],
+  selected: [],
+  bookingMode: false
 };
 
 const $ = id => document.getElementById(id);
@@ -529,7 +559,7 @@ function initGoogle() {
     callback: (resp) => {
       if (resp.error) { setCalStatus("warn", "Sign-in failed: " + resp.error); return; }
       googleToken = { access_token: resp.access_token, expiry: Date.now() + (resp.expires_in * 1000) };
-      setCalStatus("on", "Connected — live availability is loading");
+      setCalStatus("on", "Connected — loading your calendar");
       if (pendingAfterAuth) { const fn = pendingAfterAuth; pendingAfterAuth = null; fn(); }
     }
   });
@@ -537,7 +567,7 @@ function initGoogle() {
 }
 let pendingAfterAuth = null;
 function connectGoogle(after) {
-  if (!CONFIG.GOOGLE_CLIENT_ID) { showToast("Add your Google Client ID first (see SETUP.md)."); return; }
+  if (!CONFIG.GOOGLE_CLIENT_ID) { showToast("Add your Google Client ID first."); return; }
   if (!tokenClient) { initGoogle(); if (!tokenClient) { showToast("Google sign-in still loading — try again in a moment."); return; } }
   pendingAfterAuth = after || null;
   tokenClient.requestAccessToken({ prompt: googleToken ? "" : "consent" });
@@ -548,28 +578,46 @@ function signOutGoogle() {
   setCalStatus("off", "Signed out");
 }
 
-// Real timed commitments on a calendar between two instants.
-// Skips all-day events and "free"-marked events; CLOSED/booked events count.
-async function timedBusy(cid, timeMinISO, timeMaxISO) {
+// Fetch all events (including titles, locations) for a calendar over a span
+async function calEventsFull(cid, timeMinISO, timeMaxISO) {
   const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cid)}/events`
     + `?singleEvents=true&orderBy=startTime&maxResults=250`
     + `&timeMin=${encodeURIComponent(timeMinISO)}&timeMax=${encodeURIComponent(timeMaxISO)}`;
   const r = await fetch(url, { headers: { "Authorization": "Bearer " + googleToken.access_token } });
   if (!r.ok) throw new Error("events " + r.status);
   const j = await r.json();
-  return (j.items || [])
-    .filter(e => e.status !== "cancelled" && e.transparency !== "transparent" && e.start && e.start.dateTime)
-    .map(e => ({ s: new Date(e.start.dateTime), e: new Date(e.end.dateTime) }));
+  return (j.items || []).filter(e => e.status !== "cancelled").map(e => {
+    const allDay = !(e.start && e.start.dateTime);
+    return {
+      allDay,
+      transparency: e.transparency || "opaque",
+      s: new Date(allDay ? (e.start.date + "T00:00:00") : e.start.dateTime),
+      e: new Date(allDay ? (e.end.date   + "T00:00:00") : e.end.dateTime),
+      title: e.summary || "(busy)",
+      loc: e.location || "",
+      calId: cid
+    };
+  });
 }
 
 // =====================================================================
-//  DATE HELPERS (local time — no UTC shift)
+//  DATE HELPERS
 // =====================================================================
 function isoLocal(d) {
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 }
 function todayISO() { return isoLocal(new Date()); }
 function addDaysISO(iso, n) { const d = new Date(iso + "T00:00:00"); d.setDate(d.getDate() + n); return isoLocal(d); }
+function mondayOf(iso) {
+  const d = new Date(iso + "T00:00:00");
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return isoLocal(d);
+}
+function weekDays(mondayISO) {
+  const out = [];
+  for (let i = 0; i < 7; i++) out.push(addDaysISO(mondayISO, i));
+  return out;
+}
 function fmtDate(iso) {
   const d = new Date(iso + "T00:00:00");
   return d.toLocaleDateString("en-GB", { weekday:"long", day:"numeric", month:"long" });
@@ -580,8 +628,23 @@ function fmtTime(t) {
   const hh = ((h+11)%12)+1;
   return m ? `${hh}.${String(m).padStart(2,"0")}${ampm}` : `${hh}${ampm}`;
 }
+function fmtClock(d) {
+  const h = d.getHours(), m = d.getMinutes();
+  const ap = h >= 12 ? "pm" : "am", hh = ((h + 11) % 12) + 1;
+  return m ? `${hh}.${String(m).padStart(2,"0")}${ap}` : `${hh}${ap}`;
+}
 
-// Next ~6 weeks of offered weekdays, starting today (if today is offered) or later.
+// The offered hourly start slots within working hours
+function slotTimes() {
+  const start = toMin(settings.dayStart), end = toMin(settings.dayEnd);
+  const out = [];
+  for (let m = start; m + SLOT_MIN <= end; m += 60) {
+    out.push(String(Math.floor(m/60)).padStart(2,"0") + ":" + String(m%60).padStart(2,"0"));
+  }
+  return out;
+}
+
+// Build offered weekdays starting from a date
 function buildOfferedDays(fromISO) {
   const start = fromISO || todayISO();
   const out = [];
@@ -592,92 +655,40 @@ function buildOfferedDays(fromISO) {
   }
   return out;
 }
-// The hourly start times inside the working window (latest start still fits a session).
-function slotTimes() {
-  const toMin = t => { const [h,m] = t.split(":").map(Number); return h*60 + m; };
-  const start = toMin(settings.dayStart), end = toMin(settings.dayEnd);
-  const out = [];
-  for (let m = start; m + SLOT_MIN <= end; m += 60) {
-    out.push(String(Math.floor(m/60)).padStart(2,"0") + ":" + String(m%60).padStart(2,"0"));
-  }
-  return out;
-}
 
 // =====================================================================
-//  LIVE AVAILABILITY GRID
+//  AVAILABILITY CHECK (uses calState.byDay loaded from calendar API)
 // =====================================================================
-function venueKey() { return $("fLoc").value; }
-function visibleDays() { return state.offeredDays.slice(state.winIdx, state.winIdx + 3); }
-
-async function loadWindow() {
-  const wrap = $("pickWrap");
-  if (!tokenValid()) {
-    $("pickEmpty") && ($("pickEmpty").textContent = "Connect Google Calendar (in Settings) to load live availability.");
-    wrap.innerHTML = '<div class="pick-empty">Connect Google Calendar (in Settings), then tap Find times again.</div>';
-    return;
-  }
-  const days = visibleDays();
-  if (!days.length) { wrap.innerHTML = '<div class="pick-empty">No more offered days ahead.</div>'; return; }
-  const key = venueKey() + "|" + days[0] + "|" + days[days.length-1];
-  $("pickTitle").textContent = days.map(d => new Date(d+"T00:00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})).join("  ·  ");
-  wrap.innerHTML = '<div class="pick-empty"><span class="spinner"></span>Reading the calendars…</div>';
-
-  const cals = VENUES[venueKey()].cals;
-  const timeMin = new Date(days[0] + "T00:00:00").toISOString();
-  const timeMax = new Date(days[days.length-1] + "T23:59:59").toISOString();
-  try {
-    const results = await Promise.all(cals.map(c => timedBusy(c, timeMin, timeMax).catch(() => [])));
-    state.busyByCal = {};
-    cals.forEach((c, i) => state.busyByCal[c] = results[i]);
-    state.loadedKey = key;
-    renderGrid(days);
-  } catch (e) {
-    wrap.innerHTML = '<div class="pick-empty">Couldn\'t read availability — ' + e.message + '</div>';
-  }
-}
-
 function slotIsFree(dateISO, hhmm) {
   const s = new Date(`${dateISO}T${hhmm}:00`);
   const e = new Date(s.getTime() + SLOT_MIN * 60000);
-  const clearOn = cid => !(state.busyByCal[cid] || []).some(b => s < b.e && e > b.s);
-  const v = VENUES[venueKey()];
-  if (v.mode === "anyRoom") return v.cals.some(clearOn);  // at least one room open
-  return v.cals.every(clearOn);                            // shared studio: nothing overlaps
-}
-function isSelected(dateISO, hhmm) { return state.selected.some(x => x.dateISO === dateISO && x.hhmm === hhmm); }
+  const dayEvs = calState.byDay[dateISO] || [];
 
-function renderGrid(days) {
-  const times = slotTimes();
-  const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  let html = '<div class="pick-grid">';
-  html += '<div class="pg-h corner"></div>';
-  days.forEach(iso => {
-    const d = new Date(iso + "T00:00:00");
-    html += `<div class="pg-h"><span class="dow">${dayNames[d.getDay()]}</span>${d.getDate()}/${d.getMonth()+1}</div>`;
-  });
-  times.forEach(t => {
-    html += `<div class="pg-time">${fmtTime(t)}</div>`;
-    days.forEach(iso => {
-      const past = new Date(`${iso}T${t}:00`) < new Date();
-      const free = !past && slotIsFree(iso, t);
-      const sel = isSelected(iso, t);
-      if (sel) html += `<div class="pg-slot sel" data-d="${iso}" data-t="${t}"><span class="tick">✓</span></div>`;
-      else if (free) html += `<div class="pg-slot free" data-d="${iso}" data-t="${t}">+</div>`;
-      else html += `<div class="pg-slot busy">·</div>`;
+  function overlaps(ev) {
+    return !ev.allDay && ev.transparency !== "transparent" && ev.s < e && ev.e > s;
+  }
+
+  const v = VENUES[venueKey()];
+  if (v.mode === "anyRoom") {
+    return v.cals.some(cid => {
+      return !dayEvs.filter(ev => ev.calId === cid).some(overlaps);
     });
-  });
-  html += '</div>';
-  $("pickWrap").innerHTML = html;
+  } else {
+    return !dayEvs.filter(ev => v.cals.includes(ev.calId)).some(overlaps);
+  }
 }
+function venueKey() { return $("fLoc") ? $("fLoc").value : "waterloo"; }
+function isSelected(dateISO, hhmm) { return state.selected.some(x => x.dateISO === dateISO && x.hhmm === hhmm); }
 
 function toggleSlot(dateISO, hhmm) {
   const i = state.selected.findIndex(x => x.dateISO === dateISO && x.hhmm === hhmm);
   if (i >= 0) state.selected.splice(i, 1);
   else state.selected.push({ dateISO, hhmm, label: fmtDate(dateISO) + " at " + fmtTime(hhmm) });
   state.selected.sort((a,b) => (a.dateISO + a.hhmm).localeCompare(b.dateISO + b.hhmm));
-  renderGrid(visibleDays());
   renderChips();
+  renderUnifiedGrid(weekDays(calState.weekKey || mondayOf(calState.day)));
 }
+
 function renderChips() {
   const box = $("chips");
   if (!state.selected.length) {
@@ -691,7 +702,243 @@ function renderChips() {
 }
 
 // =====================================================================
-//  READ MESSAGE — Claude extraction (preferred) or rules fallback
+//  UNIFIED TIME-BLOCK GRID
+// =====================================================================
+function timeToOffsetPx(hhmm) {
+  const startMin = toMin(settings.dayStart);
+  const [h, m] = hhmm.split(":").map(Number);
+  return ((h * 60 + m) - startMin) / 30 * HALF_PX;
+}
+
+function renderUnifiedGrid(days) {
+  const wrap = $("ucgWrap");
+  const startMin = toMin(settings.dayStart);
+  const endMin   = toMin(settings.dayEnd);
+  const totalHH  = Math.ceil((endMin - startMin) / 30);  // half-hour slots
+  const totalPx  = totalHH * HALF_PX;
+
+  // Collect all-day events across the days
+  const allDayByDay = {};
+  days.forEach(iso => {
+    allDayByDay[iso] = (calState.byDay[iso] || []).filter(e => e.allDay && calState.enabled.has(e.calId));
+  });
+  const hasAllDay = days.some(iso => allDayByDay[iso].length > 0);
+
+  // Build time labels (show on the hour)
+  let timesHtml = '';
+  for (let i = 0; i < totalHH; i++) {
+    const min = startMin + i * 30;
+    const label = (min % 60 === 0) ? fmtTime(String(Math.floor(min/60)).padStart(2,"0") + ":00") : '';
+    timesHtml += `<div class="ucg-time">${label}</div>`;
+  }
+
+  const dowLabels = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const now = new Date();
+
+  // Build each day column
+  let colsHtml = days.map(iso => {
+    const d = new Date(iso + "T00:00:00");
+    const dow = d.getDay();
+    const isToday = iso === todayISO();
+    const isOffered = OFFERED_DOW.includes(dow);
+
+    // Background hour/half lines
+    let bodyHtml = '';
+    for (let i = 0; i < totalHH; i++) {
+      const isHour = (i % 2 === 0);
+      bodyHtml += `<div class="ucg-hline ${isHour ? 'hour' : 'half'}" style="top:${i * HALF_PX}px"></div>`;
+    }
+
+    // Booking slots (only when in booking mode, this is an offered day, and it's in the offered range)
+    if (state.bookingMode && isOffered && state.offeredDays.includes(iso)) {
+      slotTimes().forEach(t => {
+        const slotStart = new Date(`${iso}T${t}:00`);
+        if (slotStart <= now) return;
+        const free = slotIsFree(iso, t);
+        if (!free) return;
+        const sel = isSelected(iso, t);
+        const top = timeToOffsetPx(t);
+        const cls = sel ? 'sel' : 'free';
+        bodyHtml += `<div class="ucg-slot ${cls}" style="top:${top + 2}px;height:${HOUR_PX - 4}px" data-d="${iso}" data-t="${t}">${sel ? '✓' : '+'}</div>`;
+      });
+    }
+
+    // Calendar events (timed, non-all-day)
+    const evs = (calState.byDay[iso] || []).filter(e => !e.allDay && calState.enabled.has(e.calId));
+    evs.forEach(ev => {
+      const evStartMin = ev.s.getHours() * 60 + ev.s.getMinutes();
+      const evEndMin   = ev.e.getHours() * 60 + ev.e.getMinutes();
+      const top    = Math.max(0, (evStartMin - startMin) / 30 * HALF_PX);
+      const bottom = Math.min(totalPx, (evEndMin - startMin) / 30 * HALF_PX);
+      const height = Math.max(18, bottom - top - 1);
+      const color  = calColor(ev.calId);
+      const showTime = height >= 32;
+      bodyHtml += `<div class="ucg-event" style="top:${top}px;height:${height}px;background:${color};">`
+        + `<div class="ev-t">${escapeHtml(ev.title)}</div>`
+        + (showTime ? `<div class="ev-s">${fmtClock(ev.s)}–${fmtClock(ev.e)}</div>` : '')
+        + `</div>`;
+    });
+
+    const headCls = ['ucg-col-head', isToday ? 'today' : '', isOffered ? 'offered-day' : ''].filter(Boolean).join(' ');
+    return `<div class="ucg-col">`
+      + `<div class="${headCls}"><span class="ucg-dow">${dowLabels[dow]}</span>${d.getDate()}/${d.getMonth()+1}</div>`
+      + `<div class="ucg-col-body" style="height:${totalPx}px">${bodyHtml}</div>`
+      + `</div>`;
+  }).join('');
+
+  // All-day strip
+  let allDayHtml = '';
+  if (hasAllDay) {
+    const adCols = days.map(iso => {
+      const evs = allDayByDay[iso];
+      const evHtml = evs.map(ev =>
+        `<div class="ucg-allday-ev" style="background:${calColor(ev.calId)}">${escapeHtml(ev.title)}</div>`
+      ).join('');
+      return `<div class="ucg-allday-col">${evHtml}</div>`;
+    }).join('');
+    allDayHtml = `<div class="ucg-allday-strip"><div class="ucg-allday-spacer">all day</div>${adCols}</div>`;
+  }
+
+  const colsClass = hasAllDay ? 'ucg-cols' : 'ucg-cols no-allday';
+  wrap.innerHTML = allDayHtml
+    + `<div class="ucg-scroll"><div class="ucg">`
+    + `<div class="ucg-times">${timesHtml}</div>`
+    + `<div class="${colsClass}">${colsHtml}</div>`
+    + `</div></div>`;
+
+  // Slot click handlers
+  wrap.querySelectorAll('.ucg-slot').forEach(el => {
+    el.addEventListener('click', () => toggleSlot(el.dataset.d, el.dataset.t));
+  });
+}
+
+// =====================================================================
+//  CALENDAR STATE + LOADING
+// =====================================================================
+const CAL_SOURCES = [
+  { id: "phoenix@tanner.me",                                                                            label: "Personal",   color: "#5b6b5a", on: true,  locked: true },
+  { id: "chalkfarm215@gmail.com",                                                                       label: "Chalk Farm", color: "#a8643c", on: true  },
+  { id: "7cd19a8a0df5e5ff621f3400d0cc2ca78ee6b76b3d6f56740a4be51b03a3ec98@group.calendar.google.com",  label: "Room 5",     color: "#3f6d8c", on: true  },
+  { id: "gvoqr8veipj2rkph12d9n8h13o@group.calendar.google.com",                                         label: "Room 1",     color: "#7a6aa0", on: false },
+  { id: "lsoq6nm8u6psnd42v4fnj0aaeo@group.calendar.google.com",                                         label: "Room 2",     color: "#b08a3e", on: false },
+  { id: "2k0mhoahhn64i1tr4iccg4e1gs@group.calendar.google.com",                                         label: "Room 3",     color: "#6f8f5b", on: false },
+  { id: "6dlgvktkbomu7bf830a17dq7jo@group.calendar.google.com",                                         label: "Room 4",     color: "#9c5d6f", on: false }
+];
+const calColor = id => (CAL_SOURCES.find(c => c.id === id) || {}).color || "#999";
+const calLabel = id => (CAL_SOURCES.find(c => c.id === id) || {}).label || "";
+
+const calState = {
+  day: todayISO(),
+  enabled: new Set(CAL_SOURCES.filter(c => c.on).map(c => c.id)),
+  weekKey: "",
+  loading: false,
+  byDay: {}
+};
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+}
+
+async function loadCalWeek(force) {
+  renderCalToggles();
+  const wrap = $("ucgWrap");
+
+  if (!tokenValid()) {
+    renderWeekStrip([]);
+    wrap.innerHTML = '<div class="ucg-empty">Connect Google Calendar to see your schedule.'
+      + '<br><button class="btn ghost" id="calConnectBtn" style="margin-top:10px;padding:8px 14px;font-size:13px;">Connect Google Calendar</button></div>';
+    const cb = $("calConnectBtn");
+    if (cb) cb.addEventListener("click", () => connectGoogle(() => loadCalWeek(true)));
+    return;
+  }
+
+  const monday = mondayOf(calState.day);
+  if (!force && calState.weekKey === monday && Object.keys(calState.byDay).length) {
+    renderCal();
+    return;
+  }
+
+  calState.loading = true;
+  const days = weekDays(monday);
+  renderWeekStrip(days);
+  wrap.innerHTML = '<div class="ucg-empty"><span class="spinner"></span>Reading your calendars…</div>';
+
+  const timeMin = new Date(days[0] + "T00:00:00").toISOString();
+  const timeMax = new Date(addDaysISO(monday, 7) + "T00:00:00").toISOString();
+
+  try {
+    const results = await Promise.all(CAL_SOURCES.map(c => calEventsFull(c.id, timeMin, timeMax).catch(() => [])));
+    const byDay = {};
+    days.forEach(d => byDay[d] = []);
+    results.flat().forEach(ev => {
+      const startDay = isoLocal(ev.s);
+      const endDay   = ev.allDay ? isoLocal(new Date(ev.e.getTime() - 1)) : isoLocal(ev.e);
+      let cur = startDay < days[0] ? days[0] : startDay;
+      for (let g = 0; g < 10 && cur <= days[6]; g++) {
+        if (byDay[cur]) byDay[cur].push(ev);
+        if (cur === endDay) break;
+        cur = addDaysISO(cur, 1);
+      }
+    });
+    Object.keys(byDay).forEach(d =>
+      byDay[d].sort((a, b) => (a.allDay !== b.allDay) ? (a.allDay ? -1 : 1) : (a.s - b.s)));
+    calState.byDay = byDay;
+    calState.weekKey = monday;
+    calState.loading = false;
+    renderCal();
+    setCalStatus("on", "Connected — live");
+  } catch (e) {
+    calState.loading = false;
+    wrap.innerHTML = '<div class="ucg-empty">Couldn\'t read your calendars — ' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+function renderCal() {
+  renderCalToggles();
+  const days = weekDays(calState.weekKey || mondayOf(calState.day));
+  renderWeekStrip(days);
+  renderUnifiedGrid(days);
+
+  const monday = calState.weekKey || mondayOf(calState.day);
+  const lastDay = addDaysISO(monday, 6);
+  const m0 = new Date(monday + "T00:00:00");
+  const m1 = new Date(lastDay + "T00:00:00");
+  const sameMonth = m0.getMonth() === m1.getMonth();
+  $("calHeading").textContent = sameMonth
+    ? m0.toLocaleDateString("en-GB", { day:"numeric" }) + "–" + m1.toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" })
+    : m0.toLocaleDateString("en-GB", { day:"numeric", month:"short" }) + " – " + m1.toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" });
+}
+
+function renderCalToggles() {
+  $("calToggles").innerHTML = CAL_SOURCES.map(c => {
+    const on = calState.enabled.has(c.id);
+    const style = on ? `background:${c.color};` : `color:${c.color};`;
+    return `<span class="cal-toggle ${on?"on":""} ${c.locked?"locked":""}" data-cal="${c.id}" style="${style}">`
+      + `<span class="sw"></span>${c.label}</span>`;
+  }).join("");
+}
+
+function renderWeekStrip(days) {
+  const dow = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  $("weekStrip").innerHTML = days.map((iso, i) => {
+    const evs = (calState.byDay[iso] || []).filter(e => calState.enabled.has(e.calId));
+    const cols = [...new Set(evs.map(e => calColor(e.calId)))].slice(0, 5);
+    const dots = cols.map(c => `<span class="wk-dot" style="background:${c}"></span>`).join("");
+    const d = new Date(iso + "T00:00:00");
+    const isOffered = OFFERED_DOW.includes(d.getDay());
+    const cls = ["wk-day",
+      iso === calState.day ? "sel" : "",
+      iso === todayISO() ? "today" : "",
+      isOffered ? "offered" : ""
+    ].filter(Boolean).join(" ");
+    return `<div class="${cls}" data-d="${iso}"><span class="wk-dow">${dow[i]}</span>`
+      + `<span class="wk-num">${d.getDate()}</span>`
+      + `<span class="wk-dots">${dots}</span></div>`;
+  }).join("");
+}
+
+// =====================================================================
+//  READ MESSAGE
 // =====================================================================
 async function extractFields(msg) {
   if (aiReady()) { try { return await extractWithClaude(msg); } catch (e) { return parseMessage(msg); } }
@@ -733,7 +980,6 @@ function parseMessage(msg) {
   const intent = named && !/next week|any day|some ?time|what.*free|which days/.test(lower) ? "specific" : "open";
   return { name: nameMatch ? nameMatch[1] : "", location: loc, clientType: "new", intent, fromDate: "" };
 }
-
 function fillReview(p) {
   $("fName").value = p.name;
   $("fLoc").value = p.location;
@@ -769,9 +1015,7 @@ async function draftReply() {
   ta.value = templateReply();
   by.textContent = "Template draft — add a Worker URL in Settings for Claude-written replies";
 }
-
 function isConfirm() { return state.intent === "specific" && state.selected.length === 1; }
-
 function replyContext() {
   const name = $("fName").value || "there";
   const loc = shortLoc(venueKey());
@@ -809,7 +1053,7 @@ function templateReply() {
 }
 
 // =====================================================================
-//  HAND-OFF (copy / WhatsApp / Gmail) — read-only, nothing is booked
+//  HAND-OFF
 // =====================================================================
 function copyReply(text) {
   if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text).then(()=>true).catch(()=>fallbackCopy(text));
@@ -826,6 +1070,14 @@ function fallbackCopy(text) {
 function showToast(msg) {
   const t = $("toast"); t.textContent = msg; t.classList.add("show");
   setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+function switchTab(tab) {
+  document.querySelectorAll("#tabs .tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
+  $("bookingView").classList.toggle("hidden", tab !== "booking");
+  $("calendarView").classList.toggle("hidden", tab !== "calendar");
+  $("settingsView").classList.toggle("hidden", tab !== "settings");
+  if (tab === "calendar") loadCalWeek();
 }
 
 // =====================================================================
@@ -856,22 +1108,34 @@ $("readBtn").addEventListener("click", async () => {
 
 $("findBtn").addEventListener("click", () => {
   state.offeredDays = buildOfferedDays(state.parsed.fromDate || todayISO());
-  state.winIdx = 0;
+  state.bookingMode = true;
   state.selected = [];
+
+  // Set calendar to the week of first offered day
+  if (state.offeredDays.length) calState.day = state.offeredDays[0];
+
+  // Show booking banner in calendar
+  const banner = $("calBookingBanner");
+  banner.classList.remove("hidden");
+  $("bannerName").textContent = $("fName").value || "client";
+  $("bannerLoc").textContent = shortLoc(venueKey());
+  $("calPickSection").classList.remove("hidden");
   renderChips();
-  $("pickCard").classList.remove("hidden");
-  $("pickCard").scrollIntoView({ behavior: "smooth", block: "start" });
-  if (!tokenValid()) { connectGoogle(loadWindow); } else { loadWindow(); }
+
+  // Switch to Calendar tab and load
+  switchTab("calendar");
+  if (!tokenValid()) { connectGoogle(() => loadCalWeek(true)); } else { loadCalWeek(true); }
 });
 
-$("fLoc").addEventListener("change", () => { state.selected = []; renderChips(); if (!$("pickCard").classList.contains("hidden")) loadWindow(); });
-$("pickPrev").addEventListener("click", () => { if (state.winIdx >= 3) { state.winIdx -= 3; loadWindow(); } });
-$("pickNext").addEventListener("click", () => { if (state.winIdx + 3 < state.offeredDays.length) { state.winIdx += 3; loadWindow(); } });
+$("bannerBack").addEventListener("click", () => {
+  switchTab("booking");
+});
 
-$("pickWrap").addEventListener("click", e => {
-  const cell = e.target.closest(".pg-slot.free, .pg-slot.sel");
-  if (!cell || !cell.dataset.d) return;
-  toggleSlot(cell.dataset.d, cell.dataset.t);
+$("fLoc").addEventListener("change", () => {
+  if (state.bookingMode) {
+    $("bannerLoc").textContent = shortLoc(venueKey());
+    renderUnifiedGrid(weekDays(calState.weekKey || mondayOf(calState.day)));
+  }
 });
 
 $("draftBtn").addEventListener("click", async () => {
@@ -880,9 +1144,21 @@ $("draftBtn").addEventListener("click", async () => {
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Drafting…';
   await draftReply();
   btn.disabled = false; btn.textContent = "Draft reply";
+  // Switch to booking tab to show the reply
+  state.bookingMode = false;
+  $("calBookingBanner").classList.add("hidden");
+  $("calPickSection").classList.add("hidden");
   $("replyCard").classList.remove("hidden");
+  switchTab("booking");
   $("replyCard").scrollIntoView({ behavior: "smooth", block: "start" });
 });
+
+$("clearSlotsBtn").addEventListener("click", () => {
+  state.selected = [];
+  renderChips();
+  renderUnifiedGrid(weekDays(calState.weekKey || mondayOf(calState.day)));
+});
+
 $("redraftBtn").addEventListener("click", draftReply);
 
 $("copyBtn").addEventListener("click", () => {
@@ -898,171 +1174,16 @@ $("gmailBtn").addEventListener("click", () => {
   window.open(url, "_blank");
 });
 
-// =====================================================================
-//  MY CALENDAR — read-only overlay of personal + room calendars.
-//  Default on: Personal, Chalk Farm, Room 5. Rooms 1-4 are opt-in.
-//  Unlike the booking picker, this shows EVERY enabled calendar at once
-//  with titles + locations, so cross-site clashes and travel are visible.
-// =====================================================================
-const CAL_SOURCES = [
-  { id: "phoenix@tanner.me",                                                                            label: "Personal",   color: "#5b6b5a", on: true,  locked: true },
-  { id: "chalkfarm215@gmail.com",                                                                       label: "Chalk Farm", color: "#a8643c", on: true  },
-  { id: "7cd19a8a0df5e5ff621f3400d0cc2ca78ee6b76b3d6f56740a4be51b03a3ec98@group.calendar.google.com",  label: "Room 5",     color: "#3f6d8c", on: true  },
-  { id: "gvoqr8veipj2rkph12d9n8h13o@group.calendar.google.com",                                         label: "Room 1",     color: "#7a6aa0", on: false },
-  { id: "lsoq6nm8u6psnd42v4fnj0aaeo@group.calendar.google.com",                                         label: "Room 2",     color: "#b08a3e", on: false },
-  { id: "2k0mhoahhn64i1tr4iccg4e1gs@group.calendar.google.com",                                         label: "Room 3",     color: "#6f8f5b", on: false },
-  { id: "6dlgvktkbomu7bf830a17dq7jo@group.calendar.google.com",                                         label: "Room 4",     color: "#9c5d6f", on: false }
-];
-const calColor = id => (CAL_SOURCES.find(c => c.id === id) || {}).color || "#999";
-const calLabel = id => (CAL_SOURCES.find(c => c.id === id) || {}).label || "";
-
-const calState = {
-  day: todayISO(),
-  enabled: new Set(CAL_SOURCES.filter(c => c.on).map(c => c.id)),
-  weekKey: "",
-  loading: false,
-  byDay: {}      // ISO date -> [ {s,e,title,loc,allDay,calId} ]
-};
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
-}
-function mondayOf(iso) {
-  const d = new Date(iso + "T00:00:00");
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));   // 0 = Monday
-  return isoLocal(d);
-}
-function weekDays(mondayISO) {
-  const out = [];
-  for (let i = 0; i < 7; i++) out.push(addDaysISO(mondayISO, i));
-  return out;
-}
-function fmtClock(d) {
-  const h = d.getHours(), m = d.getMinutes();
-  const ap = h >= 12 ? "pm" : "am", hh = ((h + 11) % 12) + 1;
-  return m ? `${hh}.${String(m).padStart(2,"0")}${ap}` : `${hh}${ap}`;
-}
-
-// Full events (titles + locations) on one calendar across a span.
-async function calEventsFull(cid, timeMinISO, timeMaxISO) {
-  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cid)}/events`
-    + `?singleEvents=true&orderBy=startTime&maxResults=250`
-    + `&timeMin=${encodeURIComponent(timeMinISO)}&timeMax=${encodeURIComponent(timeMaxISO)}`;
-  const r = await fetch(url, { headers: { "Authorization": "Bearer " + googleToken.access_token } });
-  if (!r.ok) throw new Error("events " + r.status);
-  const j = await r.json();
-  return (j.items || []).filter(e => e.status !== "cancelled").map(e => {
-    const allDay = !(e.start && e.start.dateTime);
-    return {
-      allDay,
-      s: new Date(allDay ? (e.start.date + "T00:00:00") : e.start.dateTime),
-      e: new Date(allDay ? (e.end.date   + "T00:00:00") : e.end.dateTime),
-      title: e.summary || "(busy)",
-      loc: e.location || "",
-      calId: cid
-    };
-  });
-}
-
-async function loadCalWeek(force) {
-  const wrap = $("agendaWrap");
-  renderCalToggles();
-  if (!tokenValid()) {
-    renderWeekStrip([]);
-    wrap.innerHTML = '<div class="cal-empty">Connect Google Calendar to see what\'s on.'
-      + '<br><button class="btn ghost" id="calConnectBtn" style="margin-top:10px;padding:8px 14px;font-size:13px;">Connect Google Calendar</button></div>';
-    const cb = $("calConnectBtn");
-    if (cb) cb.addEventListener("click", () => connectGoogle(() => loadCalWeek(true)));
-    return;
-  }
-  const monday = mondayOf(calState.day);
-  if (!force && calState.weekKey === monday && Object.keys(calState.byDay).length) { renderCal(); return; }
-  calState.loading = true;
-  const days = weekDays(monday);
-  renderWeekStrip(days);
-  wrap.innerHTML = '<div class="cal-empty"><span class="spinner"></span>Reading your calendars…</div>';
-  const timeMin = new Date(days[0] + "T00:00:00").toISOString();
-  const timeMax = new Date(addDaysISO(monday, 7) + "T00:00:00").toISOString();
-  try {
-    const results = await Promise.all(CAL_SOURCES.map(c => calEventsFull(c.id, timeMin, timeMax).catch(() => [])));
-    const byDay = {};
-    days.forEach(d => byDay[d] = []);
-    results.flat().forEach(ev => {
-      const startDay = isoLocal(ev.s);
-      const endDay = ev.allDay ? isoLocal(new Date(ev.e.getTime() - 1)) : isoLocal(ev.e);
-      let cur = startDay < days[0] ? days[0] : startDay;
-      for (let g = 0; g < 10 && cur <= endDay; g++) {
-        if (byDay[cur]) byDay[cur].push(ev);
-        if (cur === days[6]) break;
-        cur = addDaysISO(cur, 1);
-      }
-    });
-    Object.keys(byDay).forEach(d =>
-      byDay[d].sort((a, b) => (a.allDay !== b.allDay) ? (a.allDay ? -1 : 1) : (a.s - b.s)));
-    calState.byDay = byDay;
-    calState.weekKey = monday;
-    calState.loading = false;
-    renderCal();
-  } catch (e) {
-    calState.loading = false;
-    wrap.innerHTML = '<div class="cal-empty">Couldn\'t read your calendars — ' + escapeHtml(e.message) + '</div>';
-  }
-}
-
-function renderCal() {
-  renderCalToggles();
-  renderWeekStrip(weekDays(calState.weekKey || mondayOf(calState.day)));
-  renderAgenda();
-  const d = new Date(calState.day + "T00:00:00");
-  $("calHeading").innerHTML = d.toLocaleDateString("en-GB", { weekday:"long", day:"numeric", month:"long" })
-    + (calState.day === todayISO() ? ' <small>today</small>' : '');
-}
-
-function renderCalToggles() {
-  $("calToggles").innerHTML = CAL_SOURCES.map(c => {
-    const on = calState.enabled.has(c.id);
-    const style = on ? `background:${c.color};` : `color:${c.color};`;
-    return `<span class="cal-toggle ${on?"on":""} ${c.locked?"locked":""}" data-cal="${c.id}" style="${style}">`
-      + `<span class="sw"></span>${c.label}</span>`;
-  }).join("");
-}
-
-function renderWeekStrip(days) {
-  const dow = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-  $("weekStrip").innerHTML = days.map((iso, i) => {
-    const evs = (calState.byDay[iso] || []).filter(e => calState.enabled.has(e.calId));
-    const cols = [...new Set(evs.map(e => calColor(e.calId)))].slice(0, 5);
-    const dots = cols.map(c => `<span class="wk-dot" style="background:${c}"></span>`).join("");
-    const cls = ["wk-day", iso === calState.day ? "sel" : "", iso === todayISO() ? "today" : ""].join(" ");
-    return `<div class="${cls}" data-d="${iso}"><span class="wk-dow">${dow[i]}</span>`
-      + `<span class="wk-num">${new Date(iso+"T00:00:00").getDate()}</span>`
-      + `<span class="wk-dots">${dots}</span></div>`;
-  }).join("");
-}
-
-function renderAgenda() {
-  const wrap = $("agendaWrap");
-  if (calState.loading) return;
-  const evs = (calState.byDay[calState.day] || []).filter(e => calState.enabled.has(e.calId));
-  if (!evs.length) { wrap.innerHTML = '<div class="cal-empty">Nothing on this day — looks clear.</div>'; return; }
-  const rows = evs.map(ev => {
-    const tag = `<span class="ag-tag"><span class="sw" style="background:${calColor(ev.calId)}"></span>${calLabel(ev.calId)}</span>`;
-    const mine = (ev.calId === "chalkfarm215@gmail.com" && /phoenix/i.test(ev.title)) ? '<span class="ag-mine">yours</span>' : '';
-    const loc = ev.loc ? `<span class="ag-loc">· ${escapeHtml(ev.loc)}</span>` : '';
-    const time = ev.allDay ? "all day" : `${fmtClock(ev.s)}<br><span class="ag-end">${fmtClock(ev.e)}</span>`;
-    return `<div class="ag-row ${ev.allDay?"ag-allday":""}">`
-      + `<div class="ag-time">${time}</div>`
-      + `<div class="ag-body"><div class="ag-title">${escapeHtml(ev.title)}</div>`
-      + `<div class="ag-meta">${tag}${mine}${loc}</div></div></div>`;
-  }).join("");
-  wrap.innerHTML = `<div class="agenda">${rows}</div>`;
-}
-
-function shiftCalDay(n) {
-  const prevMon = calState.weekKey || mondayOf(calState.day);
-  calState.day = addDaysISO(calState.day, n);
-  if (mondayOf(calState.day) !== prevMon) loadCalWeek(); else renderCal();
-}
+// Calendar navigation
+$("calPrevWeek").addEventListener("click", () => {
+  calState.day = addDaysISO(mondayOf(calState.day), -7);
+  loadCalWeek();
+});
+$("calNextWeek").addEventListener("click", () => {
+  calState.day = addDaysISO(mondayOf(calState.day), 7);
+  loadCalWeek();
+});
+$("calTodayBtn").addEventListener("click", () => { calState.day = todayISO(); loadCalWeek(true); });
 
 $("calToggles").addEventListener("click", e => {
   const t = e.target.closest(".cal-toggle");
@@ -1076,24 +1197,17 @@ $("weekStrip").addEventListener("click", e => {
   const c = e.target.closest(".wk-day");
   if (!c) return;
   calState.day = c.dataset.d;
-  renderCal();
+  // if clicking a different week, reload
+  if (mondayOf(calState.day) !== calState.weekKey) loadCalWeek(); else renderCal();
 });
-$("calPrevDay").addEventListener("click", () => shiftCalDay(-1));
-$("calNextDay").addEventListener("click", () => shiftCalDay(1));
-$("calTodayBtn").addEventListener("click", () => { calState.day = todayISO(); loadCalWeek(); });
 
-// ---------- TABS ----------
+// Tabs
 $("tabs").addEventListener("click", e => {
   if (!e.target.dataset.tab) return;
-  const tab = e.target.dataset.tab;
-  document.querySelectorAll("#tabs .tab").forEach(t => t.classList.toggle("active", t === e.target));
-  $("bookingView").classList.toggle("hidden", tab !== "booking");
-  $("calendarView").classList.toggle("hidden", tab !== "calendar");
-  $("settingsView").classList.toggle("hidden", tab !== "settings");
-  if (tab === "calendar") loadCalWeek();
+  switchTab(e.target.dataset.tab);
 });
 
-// ---------- SETTINGS FORM ----------
+// Settings form
 function fillSettingsForm() {
   $("setIntake").value   = settings.intake;
   $("setLoc1").value     = settings.loc1;
