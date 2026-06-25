@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intake & Booking — Phoenix</title>
+<style>
+  :root {
+    --bg: #f3f1ec;
+    --paper: #fbfaf7;
+    --ink: #2b2a28;
+    --ink-soft: #6f6b63;
+    --line: #ddd8cf;
+    --accent: #5b6b5a;       /* sage, the still-water green */
+    --accent-soft: #e7ebe5;
+    --warn: #a8643c;          /* terracotta for the "check this" state */
+    --warn-soft: #f3e6dc;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(43,42,40,.04), 0 8px 30px rgba(43,42,40,.06);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 48px 24px 80px; }
+  header { margin-bottom: 36px; }
+  .eyebrow {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 10px;
+  }
+  h1 { font-size: 30px; font-weight: 500; margin: 0; letter-spacing: -.01em; }
+  .sub { color: var(--ink-soft); margin: 6px 0 0; font-size: 15px; }
+
+  .card {
+    background: var(--paper); border: 1px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 22px; margin-bottom: 20px;
+  }
+  .card h2 {
+    font-size: 13px; font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft);
+    margin: 0 0 14px; font-weight: 600;
+  }
+
+  textarea {
+    width: 100%; min-height: 96px; resize: vertical;
+    border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
+    font-family: inherit; font-size: 15px; color: var(--ink); background: #fff;
+  }
+  textarea:focus, input:focus, select:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+
+  .btn {
+    appearance: none; border: none; cursor: pointer; font-family: inherit;
+    font-size: 15px; padding: 11px 20px; border-radius: 10px;
+    background: var(--accent); color: #fff; transition: opacity .15s;
+  }
+  .btn:hover { opacity: .9; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+  .btn-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+
+  .hidden { display: none; }
+
+  /* review grid */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+  .field label {
+    display: block; font-size: 12px; color: var(--ink-soft);
+    margin-bottom: 5px; font-family: ui-monospace, Menlo, monospace; letter-spacing: .04em;
+  }
+  .field input, .field select {
+    width: 100%; border: 1px solid var(--line); border-radius: 9px;
+    padding: 10px 12px; font-family: inherit; font-size: 15px; background: #fff; color: var(--ink);
+  }
+  .field.guessed input, .field.guessed select { border-color: var(--warn); background: var(--warn-soft); }
+  .guess-tag {
+    font-size: 10px; color: var(--warn); font-family: ui-monospace, Menlo, monospace;
+    letter-spacing: .05em; margin-left: 6px; text-transform: uppercase;
+  }
+
+  .channel-toggle, .clienttype { display: flex; gap: 8px; margin-bottom: 16px; }
+  .pill {
+    flex: 1; text-align: center; padding: 9px; border: 1px solid var(--line);
+    border-radius: 9px; cursor: pointer; font-size: 14px; background: #fff; color: var(--ink-soft);
+    user-select: none;
+  }
+  .pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .avail { font-size: 14px; padding: 10px 14px; border-radius: 9px; margin: 16px 0; }
+  .avail.free { background: var(--accent-soft); color: var(--accent); }
+  .avail.busy { background: var(--warn-soft); color: var(--warn); }
+  .avail.checking { background: #efece6; color: var(--ink-soft); }
+
+  .reply-preview {
+    width: 100%; min-height: 120px; border: 1px solid var(--line);
+    border-radius: 10px; padding: 14px; font-family: inherit; font-size: 15px;
+    background: #fff; color: var(--ink); resize: vertical;
+  }
+  .meta { font-size: 13px; color: var(--ink-soft); margin-top: 8px; }
+  .intake-note { font-size: 13px; color: var(--ink-soft); margin-top: 10px; padding: 10px 12px; background: #efece6; border-radius: 8px; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: #fff; padding: 14px 22px; border-radius: 10px;
+    font-size: 14px; box-shadow: var(--shadow); opacity: 0; transition: opacity .25s, transform .25s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+  .spinner { display:inline-block; width:14px; height:14px; border:2px solid var(--ink-soft); border-top-color:transparent; border-radius:50%; animation:spin .7s linear infinite; vertical-align:-2px; margin-right:6px;}
+  @keyframes spin { to { transform: rotate(360deg);} }
+
+  /* tab nav */
+  .tabs { display:flex; gap:6px; margin-bottom:28px; border-bottom:1px solid var(--line); }
+  .tab {
+    appearance:none; background:none; border:none; cursor:pointer; font-family:inherit;
+    font-size:14px; color:var(--ink-soft); padding:10px 14px; border-bottom:2px solid transparent;
+    margin-bottom:-1px;
+  }
+  .tab.active { color:var(--accent); border-bottom-color:var(--accent); font-weight:600; }
+
+  /* status dot */
+  .status-row { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ink-soft); margin-top:6px; }
+  .dot { width:9px; height:9px; border-radius:50%; flex:none; }
+  .dot.off { background:#c9c3b8; }
+  .dot.on  { background:#5b6b5a; }
+  .dot.warn{ background:#a8643c; }
+  .help { font-size:12px; color:var(--ink-soft); margin:6px 0 0; line-height:1.5; }
+  .save-bar { font-size:12px; color:var(--accent); margin-top:4px; height:16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Intake &amp; Booking</p>
+    <h1>A still point for the next client</h1>
+    <p class="sub">Paste their message. Check what I worked out. Approve when it's right.</p>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="booking">Booking</button>
+    <button class="tab" data-tab="settings">Settings</button>
+  </nav>
+
+  <!-- ============ BOOKING VIEW ============ -->
+  <div id="bookingView">
+
+  <!-- STEP 1: PASTE -->
+  <div class="card" id="pasteCard">
+    <h2>The message</h2>
+    <div class="channel-toggle" id="channelToggle">
+      <div class="pill active" data-channel="whatsapp">From WhatsApp</div>
+      <div class="pill" data-channel="gmail">From Gmail</div>
+    </div>
+    <textarea id="msgInput" placeholder="Paste the client's message here…">Hi there : can I book a session at waterloo on Wednesday afternoon next week about 3.00pm ? Graham</textarea>
+    <div class="btn-row">
+      <button class="btn" id="parseBtn">Read it &amp; draft</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: REVIEW -->
+  <div class="card hidden" id="reviewCard">
+    <h2>What I worked out — correct anything in orange</h2>
+
+    <div class="grid" style="margin-bottom:16px;">
+      <div class="field">
+        <label>Client name</label>
+        <input id="fName" type="text">
+      </div>
+      <div class="field" id="contactField">
+        <label id="contactLabel">WhatsApp number</label>
+        <input id="fContact" type="text" placeholder="+44…">
+      </div>
+    </div>
+
+    <label style="display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-family:ui-monospace,Menlo,monospace;">Client type</label>
+    <div class="clienttype" id="clientType">
+      <div class="pill" data-type="new">New client</div>
+      <div class="pill" data-type="returning">Returning</div>
+    </div>
+
+    <div class="grid">
+      <div class="field" id="locField">
+        <label>Location</label>
+        <select id="fLoc">
+          <option value="Breathe London Wellbeing, Waterloo SE1">Waterloo — Breathe London (SE1)</option>
+          <option value="Community Clinic, Cambridge Heath Road, Bethnal Green E2">Bethnal Green — Community Clinic (E2)</option>
+        </select>
+      </div>
+      <div class="field" id="durField">
+        <label>Duration</label>
+        <select id="fDur">
+          <option value="60">60 minutes</option>
+          <option value="90">90 minutes</option>
+        </select>
+      </div>
+      <div class="field" id="dateField">
+        <label>Date</label>
+        <input id="fDate" type="date">
+      </div>
+      <div class="field" id="timeField">
+        <label>Start time</label>
+        <input id="fTime" type="time">
+      </div>
+    </div>
+
+    <div class="avail checking" id="avail">Select a slot to check availability.</div>
+
+    <div class="btn-row">
+      <button class="btn ghost" id="recheckBtn">Re-check availability</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: REPLY -->
+  <div class="card hidden" id="replyCard">
+    <h2>Reply to send</h2>
+    <div class="channel-toggle" id="sendVia">
+      <div class="pill active" data-send="copy">Copy for WhatsApp</div>
+      <div class="pill" data-send="email">Send via Gmail</div>
+    </div>
+    <textarea class="reply-preview" id="replyText"></textarea>
+    <div class="intake-note hidden" id="intakeNote"></div>
+    <div class="meta" id="eventMeta"></div>
+    <div class="btn-row">
+      <button class="btn" id="approveBtn">Approve — open in WhatsApp</button>
+    </div>
+  </div>
+
+  </div><!-- /bookingView -->
+
+  <!-- ============ SETTINGS VIEW ============ -->
+  <div id="settingsView" class="hidden">
+
+    <div class="card">
+      <h2>Connections</h2>
+
+      <div style="margin-bottom:18px;">
+        <strong style="font-size:14px;">Google Calendar</strong>
+        <div class="status-row"><span class="dot off" id="calDot"></span><span id="calStatus">Not connected</span></div>
+        <p class="help">Checking free/busy and creating events needs a small backend (Google sign-in can't run from a plain web page for security reasons). Until that's set up, availability is simulated. <button class="btn ghost" id="calBtn" style="margin-top:8px;padding:8px 14px;font-size:13px;">Connect Google Calendar</button></p>
+      </div>
+
+      <div style="margin-bottom:18px;">
+        <strong style="font-size:14px;">WhatsApp</strong>
+        <div class="status-row"><span class="dot on"></span><span>Handoff ready — replies open in WhatsApp via deep link</span></div>
+        <p class="help">No API needed. Approving a booking opens WhatsApp with the reply pre-typed to the client's number. <em>Reading your "Clients" label isn't possible — WhatsApp doesn't expose labels to any app. Mark client type manually on the booking screen instead.</em></p>
+      </div>
+
+      <div>
+        <strong style="font-size:14px;">Gmail</strong>
+        <div class="status-row"><span class="dot on"></span><span>Handoff ready — replies open a Gmail compose window</span></div>
+        <p class="help">Pre-fills recipient, subject and body. You hit send. (Fully automatic sending also needs the backend.)</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Booking defaults</h2>
+      <div class="field" style="margin-bottom:16px;">
+        <label>Intake form link (for new clients)</label>
+        <input id="setIntake" type="text" placeholder="https://forms.gle/…">
+      </div>
+      <div class="grid">
+        <div class="field">
+          <label>Location 1</label>
+          <input id="setLoc1" type="text">
+        </div>
+        <div class="field">
+          <label>Location 2</label>
+          <input id="setLoc2" type="text">
+        </div>
+        <div class="field">
+          <label>Default duration</label>
+          <select id="setDur">
+            <option value="60">60 minutes</option>
+            <option value="90">90 minutes</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Your sign-off</label>
+          <input id="setSignoff" type="text" placeholder="Phoenix x">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="saveSettings">Save settings</button>
+      </div>
+      <div class="save-bar" id="saveBar"></div>
+    </div>
+
+  </div><!-- /settingsView -->
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ---------- SETTINGS (persisted in this browser) ----------
+const DEFAULTS = {
+  intake: "https://forms.gle/your-intake-form",
+  loc1: "Breathe London Wellbeing, Waterloo SE1",
+  loc2: "Community Clinic, Cambridge Heath Road, Bethnal Green E2",
+  dur: "60",
+  signoff: "Phoenix x"
+};
+let settings = loadSettings();
+
+function loadSettings() {
+  try { return Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem("cstlSettings") || "{}")); }
+  catch (e) { return Object.assign({}, DEFAULTS); }
+}
+function saveSettingsToStore() {
+  localStorage.setItem("cstlSettings", JSON.stringify(settings));
+}
+
+const LOCATIONS = { get waterloo(){return settings.loc1;}, get bethnal(){return settings.loc2;} };
+const state = {
+  channel: "whatsapp",
+  clientType: "new",
+  sendVia: "copy",
+  parsed: {}
+};
+
+// ---------- MOCK PARSER ----------
+// In the deployed version this is ONE fetch() to your Flask backend,
+// which calls Claude server-side and returns this same JSON shape.
+function mockParse(msg, channel) {
+  const lower = msg.toLowerCase();
+  // crude name grab: last capitalised word, or trailing token
+  const nameMatch = msg.match(/([A-Z][a-z]+)\s*$/);
+  const name = nameMatch ? nameMatch[1] : "";
+  const loc = lower.includes("bethnal") ? LOCATIONS.bethnal : LOCATIONS.waterloo;
+  // date: "wednesday afternoon next week" -> next Wednesday
+  const date = nextWeekday(3); // 3 = Wednesday
+  let time = "15:00";
+  const t = lower.match(/(\d{1,2})[.:]?(\d{2})?\s*(am|pm)?/);
+  if (t) {
+    let h = parseInt(t[1],10);
+    const m = t[2] ? t[2] : "00";
+    if (lower.includes("afternoon") && h < 12) h += 12;
+    if (t[3] === "pm" && h < 12) h += 12;
+    time = String(h).padStart(2,"0") + ":" + m;
+  }
+  return {
+    name,
+    clientType: "new",          // guess; you confirm
+    location: loc,
+    date,                        // ISO yyyy-mm-dd
+    time,
+    duration: "60",
+    // which fields are low-confidence guesses (shown in orange)
+    guessed: ["clientType", time === "15:00" ? "time" : null].filter(Boolean)
+  };
+}
+
+function nextWeekday(target) { // returns ISO date of the target weekday in the *following* week
+  const d = new Date();
+  const day = d.getDay();
+  let add = (target - day + 7) % 7;
+  if (add === 0) add = 7;
+  add += 7 * (add <= 0 ? 1 : 0); // ensure "next week"
+  // "next week" = the target weekday at least 7 days out if this week's already named
+  const result = new Date(d);
+  result.setDate(d.getDate() + ((target - day + 7) % 7 || 7));
+  return result.toISOString().slice(0,10);
+}
+
+// ---------- MOCK AVAILABILITY ----------
+// Deployed: fetch() to backend that checks personal + Chalk Farm calendars.
+function mockAvailability(dateISO, time) {
+  return new Promise(res => {
+    setTimeout(() => {
+      // pretend 13:00 is always busy so you can see the "busy" state
+      res(time === "13:00" ? { free:false, reason:"You have a session 13:00–14:00 that day." } : { free:true });
+    }, 650);
+  });
+}
+
+// ---------- UI WIRING ----------
+const $ = id => document.getElementById(id);
+
+$("channelToggle").addEventListener("click", e => {
+  if (!e.target.dataset.channel) return;
+  state.channel = e.target.dataset.channel;
+  document.querySelectorAll("#channelToggle .pill").forEach(p => p.classList.toggle("active", p === e.target));
+});
+
+$("parseBtn").addEventListener("click", () => {
+  const msg = $("msgInput").value.trim();
+  if (!msg) return;
+  $("parseBtn").innerHTML = '<span class="spinner"></span>Reading…';
+  setTimeout(() => {
+    const p = mockParse(msg, state.channel);
+    state.parsed = p;
+    fillReview(p);
+    $("parseBtn").textContent = "Read it & draft";
+    $("reviewCard").classList.remove("hidden");
+    $("replyCard").classList.remove("hidden");
+    checkAvailability();
+    buildReply();
+    $("reviewCard").scrollIntoView({behavior:"smooth"});
+  }, 700);
+});
+
+function fillReview(p) {
+  $("fName").value = p.name;
+  $("fLoc").value = p.location;
+  $("fDate").value = p.date;
+  $("fTime").value = p.time;
+  $("fDur").value = p.duration;
+  state.clientType = p.clientType;
+  document.querySelectorAll("#clientType .pill").forEach(pill =>
+    pill.classList.toggle("active", pill.dataset.type === p.clientType));
+  // highlight guessed fields
+  ["dateField","timeField","locField","durField"].forEach(f => $(f).classList.remove("guessed"));
+  const map = { date:"dateField", time:"timeField", location:"locField", duration:"durField" };
+  p.guessed.forEach(g => { if (map[g]) $(map[g]).classList.add("guessed"); });
+}
+
+$("clientType").addEventListener("click", e => {
+  if (!e.target.dataset.type) return;
+  state.clientType = e.target.dataset.type;
+  document.querySelectorAll("#clientType .pill").forEach(p => p.classList.toggle("active", p === e.target));
+  buildReply();
+});
+
+$("sendVia").addEventListener("click", e => {
+  if (!e.target.dataset.send) return;
+  state.sendVia = e.target.dataset.send;
+  document.querySelectorAll("#sendVia .pill").forEach(p => p.classList.toggle("active", p === e.target));
+  syncSendUi();
+});
+
+function syncSendUi() {
+  const email = state.sendVia === "email";
+  $("approveBtn").textContent = email ? "Approve — open in Gmail" : "Approve — open in WhatsApp";
+  $("contactLabel").textContent = email ? "Client email" : "WhatsApp number";
+  $("fContact").placeholder = email ? "name@email.com" : "+44…";
+}
+
+["fLoc","fDate","fTime","fDur","fName"].forEach(id =>
+  $(id).addEventListener("change", () => { checkAvailability(); buildReply(); }));
+
+$("recheckBtn").addEventListener("click", checkAvailability);
+
+async function checkAvailability() {
+  const a = $("avail");
+  a.className = "avail checking";
+  a.innerHTML = '<span class="spinner"></span>Checking your calendars…';
+  const r = await mockAvailability($("fDate").value, $("fTime").value);
+  if (r.free) {
+    a.className = "avail free";
+    a.textContent = "That slot is free across your calendars.";
+  } else {
+    a.className = "avail busy";
+    a.textContent = "Clash: " + r.reason;
+  }
+}
+
+function fmtDate(iso) {
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString("en-GB", { weekday:"long", day:"numeric", month:"long" });
+}
+function fmtTime(t) {
+  const [h,m] = t.split(":").map(Number);
+  const ampm = h >= 12 ? "pm" : "am";
+  const hh = ((h+11)%12)+1;
+  return m ? `${hh}.${String(m).padStart(2,"0")}${ampm}` : `${hh}${ampm}`;
+}
+function shortLoc(loc) {
+  return loc.includes("Waterloo") ? "Waterloo" : "Bethnal Green";
+}
+
+function buildReply() {
+  const name = $("fName").value || "there";
+  const date = fmtDate($("fDate").value);
+  const time = fmtTime($("fTime").value);
+  const loc = shortLoc($("fLoc").value);
+  const isNew = state.clientType === "new";
+
+  let intakeLine = "";
+  const note = $("intakeNote");
+  if (isNew) {
+    if (state.channel === "gmail") {
+      intakeLine = " As it's your first session, I'll send a short intake form to fill in beforehand so I have your details ready.";
+      note.textContent = "New client via Gmail: a pre-filled intake link will be generated from their email address on send.";
+    } else {
+      intakeLine = ` As it's your first session, here's a short intake form to fill in before we meet: ${settings.intake}`;
+      note.textContent = "New client via WhatsApp: the generic form link is included in the message (they fill in their own details).";
+    }
+    note.classList.remove("hidden");
+  } else {
+    note.classList.add("hidden");
+  }
+
+  $("replyText").value =
+`Hi ${name}, lovely to hear from you. ${date} at ${time} at ${loc} works nicely, I've pencilled you in.${intakeLine} Looking forward to it. ${settings.signoff}`;
+
+  $("eventMeta").textContent =
+`Event: CST Session — ${name}${isNew ? " (new client)" : ""}, ${shortLoc($("fLoc").value)} · ${date}, ${time} · ${$("fDur").value} min`;
+}
+
+$("approveBtn").addEventListener("click", () => {
+  const reply = $("replyText").value;
+  const contact = $("fContact").value.trim();
+  // Always copy the reply too, as a fallback.
+  navigator.clipboard && navigator.clipboard.writeText(reply).catch(()=>{});
+
+  if (state.sendVia === "email") {
+    const subj = "Your session booking";
+    const url = "https://mail.google.com/mail/?view=cm&fs=1"
+      + "&to=" + encodeURIComponent(contact)
+      + "&su=" + encodeURIComponent(subj)
+      + "&body=" + encodeURIComponent(reply);
+    window.open(url, "_blank");
+    showToast(contact ? "Opening Gmail…" : "Reply copied. Add an email to open Gmail.");
+  } else {
+    const num = contact.replace(/[^\d]/g, ""); // wa.me needs digits only, no +
+    const url = num
+      ? "https://wa.me/" + num + "?text=" + encodeURIComponent(reply)
+      : "https://wa.me/?text=" + encodeURIComponent(reply);
+    window.open(url, "_blank");
+    showToast(num ? "Opening WhatsApp…" : "Reply copied. Add a number to send direct.");
+  }
+  // NOTE: calendar event creation happens here once the backend is connected.
+});
+
+function showToast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+// ---------- TABS ----------
+$("tabs").addEventListener("click", e => {
+  if (!e.target.dataset.tab) return;
+  const tab = e.target.dataset.tab;
+  document.querySelectorAll("#tabs .tab").forEach(t => t.classList.toggle("active", t === e.target));
+  $("bookingView").classList.toggle("hidden", tab !== "booking");
+  $("settingsView").classList.toggle("hidden", tab !== "settings");
+});
+
+// ---------- SETTINGS FORM ----------
+function fillSettingsForm() {
+  $("setIntake").value  = settings.intake;
+  $("setLoc1").value    = settings.loc1;
+  $("setLoc2").value    = settings.loc2;
+  $("setDur").value     = settings.dur;
+  $("setSignoff").value = settings.signoff;
+}
+function applyLocationsToSelect() {
+  const sel = $("fLoc");
+  sel.options[0].value = settings.loc1; sel.options[0].textContent = shortLoc(settings.loc1) + " — " + settings.loc1;
+  sel.options[1].value = settings.loc2; sel.options[1].textContent = shortLoc(settings.loc2) + " — " + settings.loc2;
+}
+$("saveSettings").addEventListener("click", () => {
+  settings.intake  = $("setIntake").value.trim() || DEFAULTS.intake;
+  settings.loc1    = $("setLoc1").value.trim()   || DEFAULTS.loc1;
+  settings.loc2    = $("setLoc2").value.trim()   || DEFAULTS.loc2;
+  settings.dur     = $("setDur").value;
+  settings.signoff = $("setSignoff").value.trim() || DEFAULTS.signoff;
+  saveSettingsToStore();
+  applyLocationsToSelect();
+  $("fDur").value = settings.dur;
+  $("saveBar").textContent = "Saved.";
+  setTimeout(() => $("saveBar").textContent = "", 1800);
+});
+
+$("calBtn").addEventListener("click", () => {
+  showToast("Calendar needs the backend step — ask Phoenix's helper to set it up.");
+});
+
+// ---------- INIT ----------
+fillSettingsForm();
+applyLocationsToSelect();
+$("fDur").value = settings.dur;
+syncSendUi();
+</script>
+</body>
+</html>
