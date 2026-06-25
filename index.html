@@ -29,8 +29,8 @@
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 720px; margin: 0 auto; padding: 48px 24px 80px; }
-  header { margin-bottom: 36px; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 48px 24px 96px; }
+  header { margin-bottom: 28px; }
   .eyebrow {
     font-family: ui-monospace, "SF Mono", Menlo, monospace;
     font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
@@ -56,7 +56,7 @@
   }
 
   textarea {
-    width: 100%; min-height: 96px; resize: vertical;
+    width: 100%; min-height: 110px; resize: vertical;
     border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
     font-family: inherit; font-size: 15px; color: var(--ink); background: #fff;
   }
@@ -70,13 +70,13 @@
   .btn:hover { opacity: .9; }
   .btn:disabled { opacity: .4; cursor: not-allowed; }
   .btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+  .btn.big { width: 100%; padding: 15px; font-size: 16px; }
   .btn-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 
   .hidden { display: none; }
 
-  /* review grid */
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
   .field label {
     display: block; font-size: 12px; color: var(--ink-soft);
     margin-bottom: 5px; font-family: ui-monospace, Menlo, monospace; letter-spacing: .04em;
@@ -85,9 +85,8 @@
     width: 100%; border: 1px solid var(--line); border-radius: 9px;
     padding: 10px 12px; font-family: inherit; font-size: 15px; background: #fff; color: var(--ink);
   }
-  .field.guessed input, .field.guessed select { border-color: var(--warn); background: var(--warn-soft); }
 
-  .channel-toggle, .clienttype { display: flex; gap: 8px; margin-bottom: 16px; }
+  .clienttype { display: flex; gap: 8px; margin-bottom: 16px; }
   .pill {
     flex: 1; text-align: center; padding: 9px; border: 1px solid var(--line);
     border-radius: 9px; cursor: pointer; font-size: 14px; background: #fff; color: var(--ink-soft);
@@ -95,41 +94,26 @@
   }
   .pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
-  .invite-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px; flex-wrap:wrap; }
-  .invite-label { font-size:14px; color:var(--ink-soft); }
-  .mini-toggle { display:flex; gap:6px; }
-  .pill.mini { flex:none; padding:6px 16px; font-size:13px; }
-
-  .avail { font-size: 14px; padding: 10px 14px; border-radius: 9px; margin: 16px 0; }
-  .avail.free { background: var(--accent-soft); color: var(--accent); }
-  .avail.busy { background: var(--warn-soft); color: var(--warn); }
-  .avail.checking { background: #efece6; color: var(--ink-soft); }
-  .slots { font-size:13px; color:var(--ink-soft); margin:-6px 0 16px; }
-  .slots b { color:var(--accent); font-weight:600; }
-
+  .help { font-size: 12px; color: var(--ink-soft); margin: 10px 0 0; line-height: 1.5; }
   .reply-preview {
-    width: 100%; min-height: 120px; border: 1px solid var(--line);
+    width: 100%; min-height: 150px; border: 1px solid var(--line);
     border-radius: 10px; padding: 14px; font-family: inherit; font-size: 15px;
     background: #fff; color: var(--ink); resize: vertical;
   }
-  .meta { font-size: 13px; color: var(--ink-soft); margin-top: 8px; }
-  .intake-note { font-size: 13px; color: var(--ink-soft); margin-top: 10px; padding: 10px 12px; background: #efece6; border-radius: 8px; }
-  .event-link { font-size: 14px; margin-top: 12px; padding: 12px 14px; background: var(--accent-soft); border-radius: 9px; color: var(--accent); }
-  .event-link a { color: var(--accent); font-weight: 600; }
   .draft-by { font-size:12px; color:var(--ink-soft); margin-top:8px; font-family:ui-monospace,Menlo,monospace; }
 
   .toast {
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
     background: var(--ink); color: #fff; padding: 14px 22px; border-radius: 10px;
     font-size: 14px; box-shadow: var(--shadow); opacity: 0; transition: opacity .25s, transform .25s;
-    pointer-events: none; max-width: 90%; text-align: center;
+    pointer-events: none; max-width: 90%; text-align: center; z-index: 50;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
   .spinner { display:inline-block; width:14px; height:14px; border:2px solid var(--ink-soft); border-top-color:transparent; border-radius:50%; animation:spin .7s linear infinite; vertical-align:-2px; margin-right:6px;}
   @keyframes spin { to { transform: rotate(360deg);} }
 
   /* tab nav */
-  .tabs { display:flex; gap:6px; margin-bottom:28px; border-bottom:1px solid var(--line); }
+  .tabs { display:flex; gap:6px; margin-bottom:24px; border-bottom:1px solid var(--line); }
   .tab {
     appearance:none; background:none; border:none; cursor:pointer; font-family:inherit;
     font-size:14px; color:var(--ink-soft); padding:10px 14px; border-bottom:2px solid transparent;
@@ -143,8 +127,42 @@
   .dot.off { background:#c9c3b8; }
   .dot.on  { background:#5b6b5a; }
   .dot.warn{ background:#a8643c; }
-  .help { font-size:12px; color:var(--ink-soft); margin:6px 0 0; line-height:1.5; }
   .save-bar { font-size:12px; color:var(--accent); margin-top:4px; height:16px; }
+
+  /* ---- 3-day picker grid ---- */
+  .pick-bar { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .pick-bar .btn { padding:7px 14px; font-size:14px; }
+  .pick-title { font-size:14px; color:var(--ink); font-weight:600; flex:1; text-align:center; }
+  .pick-grid {
+    display:grid; grid-template-columns:52px repeat(3, 1fr);
+    border:1px solid var(--line); border-radius:10px; overflow:hidden; background:#fff;
+  }
+  .pg-h {
+    padding:8px 4px; text-align:center; font-size:12px; font-weight:600; color:var(--ink);
+    border-left:1px solid var(--line); border-bottom:1px solid var(--line); background:#f6f4ef;
+  }
+  .pg-h.corner { background:#f6f4ef; }
+  .pg-h .dow { display:block; font-size:11px; color:var(--ink-soft); font-weight:400; }
+  .pg-time {
+    padding:6px 4px; text-align:right; font-size:11px; color:var(--ink-soft);
+    border-top:1px solid #efece6; font-family:ui-monospace,Menlo,monospace;
+    display:flex; align-items:center; justify-content:flex-end;
+  }
+  .pg-slot {
+    border-top:1px solid #efece6; border-left:1px solid var(--line);
+    min-height:42px; display:flex; align-items:center; justify-content:center;
+    font-size:13px; user-select:none;
+  }
+  .pg-slot.free { cursor:pointer; color:var(--accent); background:#fff; }
+  .pg-slot.free:hover { background:var(--accent-soft); }
+  .pg-slot.busy { color:#cfc9bd; background:#f5f3ee; cursor:not-allowed; }
+  .pg-slot.sel { background:var(--accent); color:#fff; font-weight:600; }
+  .pg-slot .tick { font-size:13px; }
+  .pick-empty { padding:24px; text-align:center; font-size:14px; color:var(--ink-soft); }
+  .chips { margin:14px 0 0; font-size:13px; color:var(--ink-soft); }
+  .chip { display:inline-block; background:var(--accent-soft); color:var(--accent); border-radius:7px;
+          padding:4px 10px; margin:0 6px 6px 0; font-size:13px; }
+  .chip b { font-weight:600; }
 </style>
 </head>
 <body>
@@ -152,8 +170,8 @@
   <header>
     <p class="eyebrow">Intake &amp; Booking</p>
     <h1>A still point for the next client</h1>
-    <p class="sub">Paste their message. I'll check your calendar and draft a reply. Approve when it's right.</p>
-    <p style="font-size:11px;color:#9a9488;margin-top:4px;">build 2026-06-24h · one-card intake · Claude reads &amp; drafts</p>
+    <p class="sub">Paste their message. Read it, pick the times you want to offer, draft a reply.</p>
+    <p style="font-size:11px;color:#9a9488;margin-top:4px;">build 2026-06-25a · read-only · hand-pick from live availability</p>
   </header>
 
   <nav class="tabs" id="tabs">
@@ -164,32 +182,14 @@
   <!-- ============ BOOKING VIEW ============ -->
   <div id="bookingView">
 
-  <!-- CALENDAR PEEK (collapsible) -->
-  <details class="card" id="peekCard" style="padding:0;">
-    <summary style="list-style:none;cursor:pointer;padding:18px 22px;font-family:ui-monospace,Menlo,monospace;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);">▾ Peek at my calendar</summary>
-    <div style="padding:0 22px 22px;">
-      <div class="grid">
-        <div class="field">
-          <label>Calendar</label>
-          <select id="calPick"><option value="primary">Connect Google to load your calendars</option></select>
-        </div>
-        <div class="field">
-          <label>Day</label>
-          <input id="peekDate" type="date">
-        </div>
-      </div>
-      <div id="peekList" class="slots" style="margin-top:14px;">Connect Google Calendar (in Settings), then pick a day.</div>
-    </div>
-  </details>
-
-  <!-- STEP 1: MESSAGE + DETAILS (merged) -->
+  <!-- STEP 1: MESSAGE + DETAILS -->
   <div class="card" id="bookingCard">
-    <h2><span class="step-tag">Step 1</span> The message &amp; the details</h2>
-    <textarea id="msgInput" placeholder="Paste the client's message here…">Hi there : do you have any availability next week at waterloo ? Graham</textarea>
+    <h2><span class="step-tag">Step 1</span> The message</h2>
+    <textarea id="msgInput" placeholder="Paste the client's message here…"></textarea>
     <div class="btn-row">
       <button class="btn" id="readBtn">Read message</button>
     </div>
-    <p class="help">I'll work out whether they're asking what's free or naming a time, and pull out the site. Fix anything in orange, then draft.</p>
+    <p class="help">I'll work out whether they're asking what's free or naming a time, pull out a name and the site, and guess new vs returning. Fix anything below, then find times.</p>
 
     <!-- review fields appear here once the message is read -->
     <div id="reviewBlock" class="hidden" style="margin-top:22px;border-top:1px solid var(--line);padding-top:20px;">
@@ -199,16 +199,18 @@
         <div class="pill" data-intent="open">They're asking what's free</div>
         <div class="pill" data-intent="specific">They want a specific time</div>
       </div>
-      <p class="help" id="intentHelp" style="margin-top:-8px;margin-bottom:14px;"></p>
 
-      <div class="grid" style="margin-bottom:16px;">
+      <div class="grid2" style="margin-bottom:16px;">
         <div class="field">
           <label>Client name</label>
-          <input id="fName" type="text">
+          <input id="fName" type="text" placeholder="(optional)">
         </div>
-        <div class="field" id="contactField">
-          <label id="contactLabel">WhatsApp number</label>
-          <input id="fContact" type="text" placeholder="+44…">
+        <div class="field">
+          <label>Location</label>
+          <select id="fLoc">
+            <option value="waterloo">Waterloo (5 rooms)</option>
+            <option value="chalkfarm">Chalk Farm Studio</option>
+          </select>
         </div>
       </div>
 
@@ -218,75 +220,43 @@
         <div class="pill" data-type="returning">Returning</div>
       </div>
 
-      <div class="grid">
-        <div class="field" id="locField">
-          <label>Location</label>
-          <select id="fLoc">
-            <option value="Breathe London Wellbeing, Waterloo SE1">Waterloo — Breathe London (SE1)</option>
-            <option value="Community Clinic, Cambridge Heath Road, Bethnal Green E2">Bethnal Green — Community Clinic (E2)</option>
-          </select>
-        </div>
-        <div class="field" id="durField">
-          <label>Duration</label>
-          <select id="fDur">
-            <option value="60">60 minutes</option>
-            <option value="90">90 minutes</option>
-          </select>
-        </div>
-        <!-- "A specific time" fields -->
-        <div class="field" id="dateField">
-          <label>Date</label>
-          <input id="fDate" type="date">
-        </div>
-        <div class="field" id="timeField">
-          <label>Start time</label>
-          <input id="fTime" type="time">
-        </div>
-        <!-- "What's free" range fields -->
-        <div class="field hidden" id="rangeStartField">
-          <label>From</label>
-          <input id="fRangeStart" type="date">
-        </div>
-        <div class="field hidden" id="rangeEndField">
-          <label>To</label>
-          <input id="fRangeEnd" type="date">
-        </div>
-      </div>
-
-      <div class="avail checking" id="avail">Read a message to begin.</div>
-      <div class="slots hidden" id="slots"></div>
-
       <div class="btn-row">
-        <button class="btn" id="draftBtn">Check &amp; draft reply</button>
+        <button class="btn" id="findBtn">Find times</button>
       </div>
     </div>
   </div>
 
-  <!-- STEP 2: REPLY -->
+  <!-- STEP 2: PICK TIMES -->
+  <div class="card hidden" id="pickCard">
+    <h2><span class="step-tag">Step 2</span> Pick the times to offer</h2>
+    <div class="pick-bar">
+      <button class="btn ghost" id="pickPrev">‹</button>
+      <span class="pick-title" id="pickTitle"></span>
+      <button class="btn ghost" id="pickNext">›</button>
+    </div>
+    <div id="pickWrap">
+      <div class="pick-empty" id="pickEmpty">Connect Google Calendar (in Settings) to load live availability.</div>
+    </div>
+    <p class="help" id="pickHelp">Offered days are Mon/Wed/Thu/Fri, 11:00–20:30. Greyed slots are already booked. Tap the ones you want to offer — pick as many as you like. Travel-gap rules aren't auto-applied, so eyeball those.</p>
+    <div class="chips hidden" id="chips"></div>
+    <div class="btn-row">
+      <button class="btn" id="draftBtn" disabled>Draft reply</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: REPLY -->
   <div class="card hidden" id="replyCard">
-    <h2><span class="step-tag">Step 2</span> Reply &amp; book</h2>
-    <div class="channel-toggle" id="sendVia">
-      <div class="pill active" data-send="copy">Copy for WhatsApp</div>
-      <div class="pill" data-send="email">Send via Gmail</div>
-    </div>
-    <div class="invite-row">
-      <span class="invite-label">Add "you'll get a calendar invite" line</span>
-      <div class="mini-toggle" id="inviteToggle">
-        <div class="pill mini" data-invite="on">On</div>
-        <div class="pill mini active" data-invite="off">Off</div>
-      </div>
-    </div>
-    <p class="help" id="inviteHelp">Off by default. This only changes the wording in the reply — your event is still created on your calendar, and (in Gmail mode) the client still gets the real invite to accept.</p>
+    <h2><span class="step-tag">Step 3</span> The reply</h2>
     <textarea class="reply-preview" id="replyText"></textarea>
     <p class="draft-by" id="draftBy"></p>
-    <div class="intake-note hidden" id="intakeNote"></div>
-    <div class="meta" id="eventMeta"></div>
-    <div class="event-link hidden" id="eventLink"></div>
-    <div class="btn-row">
-      <button class="btn ghost" id="redraftBtn">Re-draft this reply</button>
-      <button class="btn" id="confirmBtn">Confirm time, add form &amp; book</button>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn ghost" id="redraftBtn">Re-draft</button>
     </div>
-    <p class="help" id="bookHelp">This step confirms the time the client picked: it re-drafts a confirmation (with the intake form link for new clients), creates the event on your calendar, and opens WhatsApp/Gmail with the reply pre-typed. Enter the client's number with country code (e.g. 44 7700…) so WhatsApp opens the right chat. To send the real calendar invite, switch to "Send via Gmail" and add their email.</p>
+    <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn big" id="copyBtn" style="flex:2;">Copy reply</button>
+      <button class="btn ghost" id="waBtn" style="flex:1;">WhatsApp</button>
+      <button class="btn ghost" id="gmailBtn" style="flex:1;">Gmail</button>
+    </div>
   </div>
 
   </div><!-- /bookingView -->
@@ -300,29 +270,19 @@
       <div style="margin-bottom:18px;">
         <strong style="font-size:14px;">Google Calendar</strong>
         <div class="status-row"><span class="dot off" id="calDot"></span><span id="calStatus">Not connected</span></div>
-        <p class="help">Sign in once with the Google account that holds your calendars. The page then checks free/busy and creates events directly. Sign-in lasts about an hour, then tap Connect again. <br><button class="btn ghost" id="calBtn" style="margin-top:8px;padding:8px 14px;font-size:13px;">Connect Google Calendar</button> <button class="btn ghost" id="calSignOut" style="margin-top:8px;padding:8px 14px;font-size:13px;display:none;">Sign out</button></p>
+        <p class="help">Sign in once with the account that can see your Waterloo room calendars and Chalk Farm. The grid then reads live availability. Sign-in lasts about an hour, then tap Connect again.<br>
+        <button class="btn ghost" id="calBtn" style="margin-top:8px;padding:8px 14px;font-size:13px;">Connect Google Calendar</button>
+        <button class="btn ghost" id="calSignOut" style="margin-top:8px;padding:8px 14px;font-size:13px;display:none;">Sign out</button></p>
       </div>
 
-      <div style="margin-bottom:18px;">
+      <div>
         <strong style="font-size:14px;">Claude (reply drafting)</strong>
         <div class="status-row"><span class="dot off" id="aiDot"></span><span id="aiStatus">Not connected</span></div>
-        <p class="help">Replies are written by Claude through your Cloudflare Worker so your API key stays private. Paste the Worker URL below and Save. Without it, the page falls back to a plain template. <em>See WORKER-SETUP.md.</em></p>
+        <p class="help">Replies are written by Claude through your Cloudflare Worker so your API key stays private. Without it, the page falls back to a plain template. <em>See WORKER-SETUP.md.</em></p>
         <div class="field" style="margin-top:8px;">
           <label>Worker URL</label>
           <input id="setWorker" type="text" placeholder="https://cstl-booking-ai.YOURNAME.workers.dev">
         </div>
-      </div>
-
-      <div style="margin-bottom:18px;">
-        <strong style="font-size:14px;">WhatsApp</strong>
-        <div class="status-row"><span class="dot on"></span><span>Handoff ready — replies open in WhatsApp via deep link</span></div>
-        <p class="help">No API needed. Approving a booking opens WhatsApp with the reply pre-typed. <em>WhatsApp clients can't get a Google invite unless you also have their email — without it, the event is created on your calendar only.</em></p>
-      </div>
-
-      <div>
-        <strong style="font-size:14px;">Gmail</strong>
-        <div class="status-row"><span class="dot on"></span><span>Handoff ready — replies open a Gmail compose window</span></div>
-        <p class="help">Pre-fills recipient, subject and body. You hit send. With an email on the booking, the client also gets the calendar invite to accept.</p>
       </div>
     </div>
 
@@ -332,21 +292,14 @@
         <label>Intake form link (for new clients)</label>
         <input id="setIntake" type="text" placeholder="https://forms.gle/…">
       </div>
-      <div class="grid">
+      <div class="grid2">
         <div class="field">
-          <label>Location 1</label>
+          <label>Waterloo — full location text</label>
           <input id="setLoc1" type="text">
         </div>
         <div class="field">
-          <label>Location 2</label>
+          <label>Chalk Farm — full location text</label>
           <input id="setLoc2" type="text">
-        </div>
-        <div class="field">
-          <label>Default duration</label>
-          <select id="setDur">
-            <option value="60">60 minutes</option>
-            <option value="90">90 minutes</option>
-          </select>
         </div>
         <div class="field">
           <label>Your sign-off</label>
@@ -354,10 +307,10 @@
         </div>
       </div>
       <div class="field" style="margin-top:16px;">
-        <label>Working hours (for finding free slots)</label>
-        <div class="grid">
-          <input id="setDayStart" type="time" value="09:00">
-          <input id="setDayEnd" type="time" value="18:00">
+        <label>Working hours (offered slots)</label>
+        <div class="grid2">
+          <input id="setDayStart" type="time" value="11:00">
+          <input id="setDayEnd" type="time" value="20:30">
         </div>
       </div>
       <div class="btn-row">
@@ -374,30 +327,51 @@
 
 <script>
 // =====================================================================
-//  CONFIG — Google OAuth for the calendar. The Claude API key is NOT here:
-//  it lives in your Cloudflare Worker as a secret. Set the Worker URL in
-//  Settings (or below). See WORKER-SETUP.md.
+//  CONFIG — Google OAuth + the venue calendars. The Claude API key is NOT
+//  here: it lives in your Cloudflare Worker as a secret. Set the Worker URL
+//  in Settings. See WORKER-SETUP.md.
 // =====================================================================
 const CONFIG = {
   GOOGLE_CLIENT_ID: "313104627584-bvabn7550jrr7m8q9popr0r5t2vr0fkt.apps.googleusercontent.com",
-  CALENDAR_ID: "primary",               // which calendar to create events on
   TIMEZONE: "Europe/London",
-  SCOPES: "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly",
-  WORKER_URL: ""                        // optional default; Settings overrides this
+  SCOPES: "https://www.googleapis.com/auth/calendar.readonly",
+  WORKER_URL: ""
 };
+
+// Venues -> the Google calendars that decide availability.
+//  waterloo : free if AT LEAST ONE of the 5 rooms is open over the hour.
+//  chalkfarm: free if nothing overlaps on the shared studio calendar.
+const VENUES = {
+  waterloo: {
+    label: "Waterloo",
+    mode: "anyRoom",
+    cals: [
+      "gvoqr8veipj2rkph12d9n8h13o@group.calendar.google.com",                       // Room 1
+      "lsoq6nm8u6psnd42v4fnj0aaeo@group.calendar.google.com",                       // Room 2
+      "2k0mhoahhn64i1tr4iccg4e1gs@group.calendar.google.com",                       // Room 3
+      "6dlgvktkbomu7bf830a17dq7jo@group.calendar.google.com",                       // Room 4
+      "7cd19a8a0df5e5ff621f3400d0cc2ca78ee6b76b3d6f56740a4be51b03a3ec98@group.calendar.google.com" // Room 5
+    ]
+  },
+  chalkfarm: {
+    label: "Chalk Farm",
+    mode: "single",
+    cals: ["chalkfarm215@gmail.com"]
+  }
+};
+
+const OFFERED_DOW = [1, 3, 4, 5];   // Mon, Wed, Thu, Fri
+const SLOT_MIN = 60;
 
 // ---------- SETTINGS (persisted in this browser) ----------
 const DEFAULTS = {
   intake: "https://forms.gle/your-intake-form",
   loc1: "Breathe London Wellbeing, Waterloo SE1",
-  loc2: "Community Clinic, Cambridge Heath Road, Bethnal Green E2",
-  dur: "60",
+  loc2: "Chalk Farm Studio, NW1",
   signoff: "Phoenix x",
-  calInvite: false,       // include the "you'll get a calendar invite" line in the reply
-  worker: "",             // Cloudflare Worker URL that proxies Claude
-  dayStart: "09:00",
-  dayEnd: "18:00",
-  calendarId: "primary"   // which Google calendar to check/book (set by the dropdown)
+  worker: "",
+  dayStart: "11:00",
+  dayEnd: "20:30"
 };
 let settings = loadSettings();
 
@@ -405,25 +379,22 @@ function loadSettings() {
   try { return Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem("cstlSettings") || "{}")); }
   catch (e) { return Object.assign({}, DEFAULTS); }
 }
-function saveSettingsToStore() {
-  localStorage.setItem("cstlSettings", JSON.stringify(settings));
-}
+function saveSettingsToStore() { localStorage.setItem("cstlSettings", JSON.stringify(settings)); }
 function workerUrl() { return (settings.worker || CONFIG.WORKER_URL || "").trim().replace(/\/$/, ""); }
+function venueLocText(key) { return key === "chalkfarm" ? settings.loc2 : settings.loc1; }
 
-const LOCATIONS = { get waterloo(){return settings.loc1;}, get bethnal(){return settings.loc2;} };
 const state = {
   clientType: "new",
-  sendVia: "copy",
-  calInvite: settings.calInvite,
+  intent: "open",          // "open" (asking what's free) | "specific" (named a time)
   parsed: {},
-  lastEvent: null,
-  lastAvail: null,        // { free, reason, freeWindows: [...] }
-  open: false,            // true when the client asked for a range, not one time
-  rangeStart: null,       // ISO date
-  rangeEnd: null,         // ISO date
-  rangeSlots: [],         // [{ dateISO, hhmm, label }] suggested across the range
-  stage: "offer"          // "offer" (step 1) or "confirm" (step 2)
+  offeredDays: [],         // ISO list of upcoming offered weekdays
+  winIdx: 0,               // index into offeredDays for the leftmost visible day
+  busyByCal: {},           // calId -> [{s,e}] for the loaded window
+  loadedKey: "",           // venue+window signature already fetched
+  selected: []             // [{dateISO, hhmm, label}]
 };
+
+const $ = id => document.getElementById(id);
 
 // =====================================================================
 //  CLAUDE via Cloudflare Worker
@@ -435,7 +406,6 @@ function setAiStatus() {
   if (aiReady()) { dot.className = "dot on"; st.textContent = "Connected — Claude drafts your replies"; }
   else { dot.className = "dot off"; st.textContent = "Not connected — using plain template (add Worker URL)"; }
 }
-
 async function askClaude(system, user) {
   const url = workerUrl();
   if (!url) throw new Error("no-worker");
@@ -449,8 +419,6 @@ async function askClaude(system, user) {
   if (j.error) throw new Error(typeof j.error === "string" ? j.error : JSON.stringify(j.error));
   return (j.text || "").trim();
 }
-
-// Shared voice instructions. (Phoenix dislikes generic AI phrasing.)
 const VOICE = [
   "You write short, warm, human replies for Phoenix, a craniosacral therapist in London.",
   "British English. Use contractions. Sound calm and unhurried, never salesy or corporate.",
@@ -458,33 +426,15 @@ const VOICE = [
   "2 to 4 short sentences. Do not invent details that are not provided. Return ONLY the message text, nothing else."
 ].join(" ");
 
-function describeAvail() {
-  if (state.open) {
-    if (state.rangeSlots && state.rangeSlots.length) {
-      return "The client asked for availability across a range, not one time. "
-        + "Offer these free options and ask which suits: " + state.rangeSlots.map(s => s.label).join("; ") + ".";
-    }
-    return "The client asked for availability across a range, but no free slots were found in that window. Ask them for a couple of days that suit and you'll check.";
-  }
-  const a = state.lastAvail;
-  if (!a) return "Availability unknown.";
-  if (a.free) return "The requested slot IS free on the calendar.";
-  let s = "The requested slot is NOT free (" + (a.reason || "clash") + ").";
-  if (a.freeWindows && a.freeWindows.length) {
-    s += " Free times that day: " + a.freeWindows.map(w => w.label).join(", ") + ".";
-  }
-  return s;
-}
-
 // =====================================================================
-//  GOOGLE CALENDAR — client-side OAuth + REST calls
+//  GOOGLE — client-side OAuth + REST reads
 // =====================================================================
 let tokenClient = null;
-let googleToken = null;   // { access_token, expiry }
+let googleToken = null;
 
 function setCalStatus(kind, msg) {
   const dot = $("calDot"), st = $("calStatus");
-  if (dot) dot.className = "dot " + kind;       // off | on | warn
+  if (dot) dot.className = "dot " + kind;
   if (st) st.textContent = msg;
   const out = $("calSignOut");
   if (out) out.style.display = (kind === "on") ? "inline-block" : "none";
@@ -493,10 +443,7 @@ function googleReady() { return !!(window.google && google.accounts && google.ac
 function tokenValid() { return googleToken && Date.now() < (googleToken.expiry - 60000); }
 
 function initGoogle() {
-  if (!CONFIG.GOOGLE_CLIENT_ID) {
-    setCalStatus("off", "Add your Client ID in the code (CONFIG.GOOGLE_CLIENT_ID)");
-    return;
-  }
+  if (!CONFIG.GOOGLE_CLIENT_ID) { setCalStatus("off", "Add your Client ID in CONFIG.GOOGLE_CLIENT_ID"); return; }
   if (!googleReady()) { setTimeout(initGoogle, 400); return; }
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CONFIG.GOOGLE_CLIENT_ID,
@@ -504,19 +451,15 @@ function initGoogle() {
     callback: (resp) => {
       if (resp.error) { setCalStatus("warn", "Sign-in failed: " + resp.error); return; }
       googleToken = { access_token: resp.access_token, expiry: Date.now() + (resp.expires_in * 1000) };
-      setCalStatus("on", "Connected — events will be created live");
-      loadCalendars();          // populate the calendar dropdown
-      loadPeek();               // refresh the peek panel if open
+      setCalStatus("on", "Connected — live availability is loading");
       if (pendingAfterAuth) { const fn = pendingAfterAuth; pendingAfterAuth = null; fn(); }
-      else if ($("reviewBlock") && !$("reviewBlock").classList.contains("hidden")) checkAvailability();
     }
   });
   setCalStatus("off", "Ready — tap Connect Google Calendar");
 }
-
 let pendingAfterAuth = null;
 function connectGoogle(after) {
-  if (!CONFIG.GOOGLE_CLIENT_ID) { showToast("Add your Google Client ID in the code first (see SETUP.md)."); return; }
+  if (!CONFIG.GOOGLE_CLIENT_ID) { showToast("Add your Google Client ID first (see SETUP.md)."); return; }
   if (!tokenClient) { initGoogle(); if (!tokenClient) { showToast("Google sign-in still loading — try again in a moment."); return; } }
   pendingAfterAuth = after || null;
   tokenClient.requestAccessToken({ prompt: googleToken ? "" : "consent" });
@@ -527,533 +470,28 @@ function signOutGoogle() {
   setCalStatus("off", "Signed out");
 }
 
-// which calendar to check/book (chosen in the dropdown, falls back to primary)
-function calId() { return settings.calendarId || CONFIG.CALENDAR_ID || "primary"; }
-
-// freeBusy check + free-window finder across the working day
-async function realAvailability(dateISO, time, durMin) {
-  const start = new Date(`${dateISO}T${time}:00`);
-  const end = new Date(start.getTime() + durMin * 60000);
-  const dayStart = new Date(`${dateISO}T${settings.dayStart}:00`);
-  const dayEnd = new Date(`${dateISO}T${settings.dayEnd}:00`);
-  const body = {
-    timeMin: dayStart.toISOString(), timeMax: dayEnd.toISOString(),
-    timeZone: CONFIG.TIMEZONE, items: [{ id: calId() }]
-  };
-  const r = await fetch("https://www.googleapis.com/calendar/v3/freeBusy", {
-    method: "POST",
-    headers: { "Authorization": "Bearer " + googleToken.access_token, "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
-  if (!r.ok) throw new Error("freeBusy " + r.status + ": " + await r.text());
+// Real timed commitments on a calendar between two instants.
+// Skips all-day events and "free"-marked events; CLOSED/booked events count.
+async function timedBusy(cid, timeMinISO, timeMaxISO) {
+  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cid)}/events`
+    + `?singleEvents=true&orderBy=startTime&maxResults=250`
+    + `&timeMin=${encodeURIComponent(timeMinISO)}&timeMax=${encodeURIComponent(timeMaxISO)}`;
+  const r = await fetch(url, { headers: { "Authorization": "Bearer " + googleToken.access_token } });
+  if (!r.ok) throw new Error("events " + r.status);
   const j = await r.json();
-  const busy = ((j.calendars && j.calendars[calId()] && j.calendars[calId()].busy) || [])
-    .map(b => ({ s: new Date(b.start), e: new Date(b.end) }));
-
-  // Is the requested slot clear?
-  const clash = busy.some(b => start < b.e && end > b.s);
-
-  // Find free windows in the working day that fit the duration
-  const freeWindows = [];
-  let cursor = new Date(dayStart);
-  const sorted = busy.slice().sort((a, b) => a.s - b.s);
-  for (const b of sorted) {
-    if (b.s > cursor) addWindow(freeWindows, cursor, new Date(Math.min(b.s, dayEnd)), durMin);
-    if (b.e > cursor) cursor = new Date(b.e);
-    if (cursor >= dayEnd) break;
-  }
-  if (cursor < dayEnd) addWindow(freeWindows, cursor, dayEnd, durMin);
-
-  return clash
-    ? { free: false, reason: "you already have something booked then", freeWindows }
-    : { free: true, freeWindows };
-}
-function addWindow(arr, s, e, durMin) {
-  if ((e - s) >= durMin * 60000) {
-    arr.push({ start: s, end: e, label: fmtTime(hhmm(s)) + "–" + fmtTime(hhmm(e)) });
-  }
-}
-function hhmm(d) { return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0"); }
-
-// Scan a date range and return one suggested slot per free weekday (up to maxDays).
-// Used when a client asks for availability over a span ("next week") rather than a single time.
-async function findSlotsInRange(startISO, endISO, durMin, maxDays = 3) {
-  const timeMin = new Date(`${startISO}T${settings.dayStart}:00`);
-  const timeMax = new Date(`${endISO}T${settings.dayEnd}:00`);
-  const r = await fetch("https://www.googleapis.com/calendar/v3/freeBusy", {
-    method: "POST",
-    headers: { "Authorization": "Bearer " + googleToken.access_token, "Content-Type": "application/json" },
-    body: JSON.stringify({ timeMin: timeMin.toISOString(), timeMax: timeMax.toISOString(),
-                           timeZone: CONFIG.TIMEZONE, items: [{ id: calId() }] })
-  });
-  if (!r.ok) throw new Error("freeBusy " + r.status + ": " + await r.text());
-  const j = await r.json();
-  const busy = ((j.calendars && j.calendars[calId()] && j.calendars[calId()].busy) || [])
-    .map(b => ({ s: new Date(b.start), e: new Date(b.end) }));
-
-  const slots = [];
-  let cur = startISO;
-  while (cur <= endISO && slots.length < maxDays) {
-    const dow = new Date(cur + "T00:00:00").getDay();
-    if (dow !== 0 && dow !== 6) {                       // skip Sun(0) & Sat(6)
-      const ds = new Date(`${cur}T${settings.dayStart}:00`);
-      const de = new Date(`${cur}T${settings.dayEnd}:00`);
-      const wins = [];
-      let cursor = new Date(ds);
-      const dayBusy = busy.filter(b => b.e > ds && b.s < de).sort((a, b) => a.s - b.s);
-      for (const b of dayBusy) {
-        if (b.s > cursor) addWindow(wins, cursor, new Date(Math.min(b.s, de)), durMin);
-        if (b.e > cursor) cursor = new Date(b.e);
-        if (cursor >= de) break;
-      }
-      if (cursor < de) addWindow(wins, cursor, de, durMin);
-      if (wins.length) {
-        const w = wins[0];
-        slots.push({ dateISO: cur, hhmm: hhmm(w.start), label: fmtDate(cur) + " at " + fmtTime(hhmm(w.start)) });
-      }
-    }
-    cur = addDaysISO(cur, 1);
-  }
-  return slots;
+  return (j.items || [])
+    .filter(e => e.status !== "cancelled" && e.transparency !== "transparent" && e.start && e.start.dateTime)
+    .map(e => ({ s: new Date(e.start.dateTime), e: new Date(e.end.dateTime) }));
 }
 
-// ---------- CALENDAR DROPDOWN + DAY PEEK ----------
-async function loadCalendars() {
-  if (!tokenValid()) return;
-  try {
-    const r = await fetch("https://www.googleapis.com/calendar/v3/users/me/calendarList?minAccessRole=writer", {
-      headers: { "Authorization": "Bearer " + googleToken.access_token }
-    });
-    if (!r.ok) throw new Error("calendarList " + r.status);
-    const j = await r.json();
-    const sel = $("calPick");
-    if (!sel) return;
-    sel.innerHTML = "";
-    (j.items || []).forEach(c => {
-      const o = document.createElement("option");
-      o.value = c.id;
-      o.textContent = c.summaryOverride || c.summary || c.id;
-      if (c.primary) o.textContent += " (primary)";
-      sel.appendChild(o);
-    });
-    const ids = (j.items || []).map(c => c.id);
-    sel.value = ids.includes(settings.calendarId) ? settings.calendarId
-              : (ids.includes("primary") ? "primary" : (ids[0] || "primary"));
-    settings.calendarId = sel.value;
-    saveSettingsToStore();
-  } catch (e) { /* leave the placeholder option */ }
-}
-
-async function loadPeek() {
-  const list = $("peekList");
-  if (!list) return;
-  if (!tokenValid()) { list.textContent = "Connect Google Calendar (in Settings) to see your day."; return; }
-  const day = $("peekDate").value || todayISO();
-  list.innerHTML = '<span class="spinner"></span>Loading…';
-  try {
-    const timeMin = new Date(`${day}T00:00:00`).toISOString();
-    const timeMax = new Date(`${day}T23:59:59`).toISOString();
-    const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId())}/events`
-      + `?singleEvents=true&orderBy=startTime&timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`;
-    const r = await fetch(url, { headers: { "Authorization": "Bearer " + googleToken.access_token } });
-    if (!r.ok) throw new Error("events " + r.status);
-    const j = await r.json();
-    const items = (j.items || []).filter(e => e.status !== "cancelled");
-    if (!items.length) { list.innerHTML = "Nothing booked that day — you're clear."; return; }
-    list.innerHTML = items.map(e => {
-      const t = e.start.dateTime ? fmtTime(hhmm(new Date(e.start.dateTime))) : "all day";
-      const title = e.summary || "(busy)";
-      return `<div style="padding:4px 0;"><b>${t}</b> · ${title}</div>`;
-    }).join("");
-  } catch (e) { list.textContent = "Couldn't load — " + e.message; }
-}
-
-// create the real event
-async function createCalendarEvent() {
-  const start = new Date(`${$("fDate").value}T${$("fTime").value}:00`);
-  const end = new Date(start.getTime() + parseInt($("fDur").value, 10) * 60000);
-  const name = $("fName").value || "Client";
-  const isNew = state.clientType === "new";
-  const clientEmail = (state.sendVia === "email") ? $("fContact").value.trim() : "";
-
-  const ev = {
-    summary: `CST Session — ${name}${isNew ? " (new client)" : ""}`,
-    location: $("fLoc").value,
-    description: "Craniosacral therapy session — booked via the intake page.",
-    start: { dateTime: start.toISOString(), timeZone: CONFIG.TIMEZONE },
-    end:   { dateTime: end.toISOString(),   timeZone: CONFIG.TIMEZONE },
-    colorId: "2"
-  };
-  if (clientEmail) ev.attendees = [{ email: clientEmail }];
-  const sendUpdates = clientEmail ? "all" : "none";   // emails the client their invite
-
-  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId())}/events?sendUpdates=${sendUpdates}`;
-  const r = await fetch(url, {
-    method: "POST",
-    headers: { "Authorization": "Bearer " + googleToken.access_token, "Content-Type": "application/json" },
-    body: JSON.stringify(ev)
-  });
-  if (!r.ok) throw new Error("create event " + r.status + ": " + await r.text());
-  return await r.json();
-}
-
-// ---------- DATE HELPERS (local time — no UTC shift) ----------
+// =====================================================================
+//  DATE HELPERS (local time — no UTC shift)
+// =====================================================================
 function isoLocal(d) {
-  return d.getFullYear() + "-" +
-    String(d.getMonth() + 1).padStart(2, "0") + "-" +
-    String(d.getDate()).padStart(2, "0");
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 }
 function todayISO() { return isoLocal(new Date()); }
-function addDaysISO(iso, n) {
-  const d = new Date(iso + "T00:00:00");
-  d.setDate(d.getDate() + n);
-  return isoLocal(d);
-}
-// Date for a given weekday (0=Sun..6=Sat). Soonest future occurrence, or — when
-// "next week" is present — that weekday inside next calendar week (Mon–Sun).
-function weekdayISO(target, nextWeek) {
-  const t = todayISO();
-  const dow = new Date(t + "T00:00:00").getDay();
-  if (nextWeek) {
-    let toNextMon = (8 - dow) % 7; if (toNextMon === 0) toNextMon = 7;  // days to next Monday
-    const offsetInWeek = (target + 6) % 7;                              // Mon=0 … Sun=6
-    return addDaysISO(t, toNextMon + offsetInWeek);
-  }
-  let delta = (target - dow + 7) % 7;
-  if (delta === 0) delta = 7;          // a named weekday always means the future, never today
-  return addDaysISO(t, delta);
-}
-
-// ---------- CLAUDE EXTRACTION (preferred) ----------
-async function extractFields(msg) {
-  if (aiReady()) {
-    try { return await extractWithClaude(msg); }
-    catch (e) { return parseMessage(msg); }   // worker down / bad JSON -> rules
-  }
-  return parseMessage(msg);
-}
-
-async function extractWithClaude(msg) {
-  const now = new Date();
-  const todayStr = now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-  const sys =
-    "You extract booking details from a client's message to a London craniosacral therapist. " +
-    "Today is " + todayStr + " (" + todayISO() + "), timezone Europe/London. " +
-    "Resolve any relative date (today, tomorrow, 'this Wednesday', 'next Thursday', 'next week') to an absolute date. " +
-    "If a weekday is named with no qualifier, pick the soonest future occurrence. " +
-    "'afternoon' with no clock time means about 15:00; 'morning' about 10:00; 'evening' about 18:00. " +
-    "Return ONLY a JSON object, no prose, with keys: " +
-    "name (string, empty if unknown), location ('waterloo' | 'bethnal' | ''), " +
-    "date ('YYYY-MM-DD' or ''), time ('HH:MM' 24-hour or ''), " +
-    "clientType ('new' | 'returning' | ''), duration (60 | 90 | null), " +
-    "open (true if they asked for availability over a span like 'next week' / 'sometime Thursday or Friday' / 'any day' rather than one specific time, else false), " +
-    "rangeStart ('YYYY-MM-DD' first day of that span or ''), rangeEnd ('YYYY-MM-DD' last day or ''). " +
-    "When open is true, still fill rangeStart and rangeEnd. Use '' or null for anything not stated in the message.";
-  const text = await askClaude(sys, msg);
-  const m = text.match(/\{[\s\S]*\}/);
-  if (!m) throw new Error("no json from claude");
-  return normaliseExtract(JSON.parse(m[0]));
-}
-
-function normaliseExtract(j) {
-  const guessed = [];
-  const loc = j.location === "bethnal" ? LOCATIONS.bethnal
-            : j.location === "waterloo" ? LOCATIONS.waterloo
-            : (guessed.push("location"), LOCATIONS.waterloo);
-  const open = j.open === true;
-  let rangeStart = j.rangeStart || null, rangeEnd = j.rangeEnd || null;
-  if (open && (!rangeStart || !rangeEnd)) { const w = thisOrNextWeekRange(); rangeStart = rangeStart || w.start; rangeEnd = rangeEnd || w.end; }
-  const date = j.date || (open ? rangeStart : (guessed.push("date"), addDaysISO(todayISO(), 1)));
-  const time = j.time || (open ? "" : (guessed.push("time"), "15:00"));
-  const clientType = (j.clientType === "returning") ? "returning" : "new";
-  if (!j.clientType) guessed.push("clientType");
-  const duration = (String(j.duration) === "90") ? "90"
-                 : (String(j.duration) === "60") ? "60" : settings.dur;
-  return { name: j.name || "", clientType, location: loc, date, time: time || "10:00", duration, guessed, open, rangeStart, rangeEnd };
-}
-
-// Mon–Fri of next week (used as a sensible default span for "next week" requests)
-function thisOrNextWeekRange() {
-  const t = todayISO();
-  const dow = new Date(t + "T00:00:00").getDay();
-  let toNextMon = (8 - dow) % 7; if (toNextMon === 0) toNextMon = 7;
-  const start = addDaysISO(t, toNextMon);
-  const end = addDaysISO(start, 4);
-  return { start, end };
-}
-
-// ---------- RULE-BASED PARSER (offline fallback) ----------
-function parseMessage(msg) {
-  const lower = msg.toLowerCase();
-  const nameMatch = msg.match(/([A-Z][a-z]+)\s*$/);
-  const name = nameMatch ? nameMatch[1] : "";
-
-  // location
-  const hasLoc = lower.includes("bethnal") || lower.includes("waterloo");
-  const loc = lower.includes("bethnal") ? LOCATIONS.bethnal : LOCATIONS.waterloo;
-
-  // date — read the actual day, don't assume Wednesday
-  const days = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
-  const nextWeek = lower.includes("next week");
-  let date = null;
-  if (/\btoday\b/.test(lower)) date = todayISO();
-  else if (/\btomorrow\b/.test(lower)) date = addDaysISO(todayISO(), 1);
-  else {
-    for (let i = 0; i < 7; i++) {
-      if (lower.includes(days[i])) { date = weekdayISO(i, nextWeek); break; }
-    }
-  }
-  let dateGuessed = false;
-  if (!date) { date = addDaysISO(todayISO(), 1); dateGuessed = true; }   // sensible default: tomorrow
-
-  // time
-  let time = null;
-  const t = lower.match(/(\d{1,2})(?:[.:](\d{2}))?\s*(am|pm)?/);
-  if (t) {
-    let h = parseInt(t[1], 10);
-    const m = t[2] ? t[2] : "00";
-    if (t[3] === "pm" && h < 12) h += 12;
-    else if (t[3] === "am" && h === 12) h = 0;
-    else if (!t[3] && (lower.includes("afternoon") || lower.includes("evening")) && h < 12) h += 12;
-    time = String(h).padStart(2, "0") + ":" + m;
-  }
-  let timeGuessed = false;
-  if (!time) { time = lower.includes("morning") ? "10:00" : "15:00"; timeGuessed = true; }
-
-  // open / range request: a span word is present and no specific clock time was given
-  const spanWord = /next week|this week|any day|some ?time|which days|what days|whenever|free this|free next/.test(lower);
-  const open = spanWord && !t;            // no clock time matched -> treat as open
-  let rangeStart = null, rangeEnd = null;
-  if (open) {
-    if (lower.includes("next week")) { const w = thisOrNextWeekRange(); rangeStart = w.start; rangeEnd = w.end; }
-    else { rangeStart = addDaysISO(todayISO(), 1); rangeEnd = addDaysISO(todayISO(), 7); }
-  }
-
-  const guessed = ["clientType"];
-  if (!hasLoc) guessed.push("location");
-  if (!open && dateGuessed) guessed.push("date");
-  if (!open && timeGuessed) guessed.push("time");
-
-  return { name, clientType: "new", location: loc, date: open ? rangeStart : date,
-           time, duration: settings.dur, guessed, open, rangeStart, rangeEnd };
-}
-
-// ---------- AVAILABILITY (real if connected, simulated otherwise) ----------
-async function availability(dateISO, time, durMin) {
-  if (tokenValid()) return realAvailability(dateISO, time, durMin);
-  // fallback so the page still demonstrates without Google connected
-  return new Promise(res => setTimeout(() =>
-    res(time === "13:00"
-      ? { free:false, reason:"(simulated) a 13:00 session that day", simulated:true, freeWindows:[] }
-      : { free:true, simulated:true, freeWindows:[] }), 400));
-}
-
-// ---------- UI WIRING ----------
-const $ = id => document.getElementById(id);
-
-// ===== Intent toggle: "what's free" vs "a specific time" =====
-$("intentToggle").addEventListener("click", e => {
-  if (!e.target.dataset.intent) return;
-  state.open = e.target.dataset.intent === "open";
-  state.rangeSlots = [];
-  syncMode();
-});
-
-// Show the right fields + button label for the current intent
-function syncMode() {
-  document.querySelectorAll("#intentToggle .pill").forEach(p =>
-    p.classList.toggle("active", (p.dataset.intent === "open") === state.open));
-  ["dateField","timeField"].forEach(id => $(id).classList.toggle("hidden", state.open));
-  ["rangeStartField","rangeEndField"].forEach(id => $(id).classList.toggle("hidden", !state.open));
-  $("draftBtn").textContent = state.open ? "Find times & draft reply" : "Check & draft reply";
-  $("intentHelp").textContent = state.open
-    ? "No single day needed — I'll scan the range below and offer free times in the reply."
-    : "I'll check this exact day and time on your calendar.";
-  const a = $("avail");
-  if (a && a.classList.contains("checking")) {
-    a.textContent = state.open ? "Set the range, then draft to find free times." : "Draft to check this slot.";
-  }
-}
-
-// ===== STEP 1a: Read the message -> fill fields (NO draft yet) =====
-$("readBtn").addEventListener("click", async () => {
-  const msg = $("msgInput").value.trim();
-  if (!msg) return;
-  const btn = $("readBtn");
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Reading…';
-  let p;
-  try { p = await extractFields(msg); }
-  catch (e) { p = parseMessage(msg); }
-  state.parsed = p;
-  fillReview(p);
-  $("reviewBlock").classList.remove("hidden");
-  btn.disabled = false; btn.textContent = "Read message again";
-  if (!state.open) await checkAvailability();   // single-slot check only in "specific time" mode
-  $("reviewBlock").scrollIntoView({ behavior: "smooth", block: "nearest" });
-});
-
-// ===== STEP 1b: Draft once, after the details are correct =====
-$("draftBtn").addEventListener("click", async () => {
-  const btn = $("draftBtn");
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Drafting…';
-  if (state.open) {
-    await scanRange();                // find free slots across the requested span
-  } else {
-    await checkAvailability();        // re-check in case the time was edited
-  }
-  await draftReply("offer");          // single draft (Claude, or template fallback)
-  $("replyCard").classList.remove("hidden");
-  btn.disabled = false; btn.textContent = "Check & draft reply";
-  $("replyCard").scrollIntoView({ behavior: "smooth" });
-});
-
-// Scan the requested range for free slots and show them (open requests only)
-async function scanRange() {
-  const a = $("avail"), sl = $("slots");
-  a.className = "avail checking";
-  a.innerHTML = '<span class="spinner"></span>Finding free times across the range…';
-  sl.classList.add("hidden");
-  if (!tokenValid()) {
-    state.rangeSlots = [];
-    a.className = "avail busy";
-    a.textContent = "Connect Google Calendar (in Settings) to scan the week. I'll draft a reply asking which days suit.";
-    return;
-  }
-  try {
-    // read the range straight from the inputs (Phoenix may have adjusted them)
-    state.rangeStart = $("fRangeStart").value || state.rangeStart;
-    state.rangeEnd = $("fRangeEnd").value || state.rangeEnd;
-    const slots = await findSlotsInRange(state.rangeStart, state.rangeEnd, parseInt($("fDur").value, 10), 3);
-    state.rangeSlots = slots;
-    if (slots.length) {
-      a.className = "avail free";
-      a.textContent = "Found " + slots.length + " free option" + (slots.length > 1 ? "s" : "") + " to offer.";
-      sl.classList.remove("hidden");
-      sl.innerHTML = "Tap one to book it: " + slots.map(s =>
-        `<b class="slot-pick" data-d="${s.dateISO}" data-t="${s.hhmm}" style="cursor:pointer;text-decoration:underline dotted;">${s.label}</b>`).join(" · ");
-      // pre-set the booking fields to the first option so confirming later just works
-      $("fDate").value = slots[0].dateISO;
-      $("fTime").value = slots[0].hhmm;
-    } else {
-      a.className = "avail busy";
-      a.textContent = "No free slots in that window — the draft will ask them for other days.";
-    }
-  } catch (e) {
-    state.rangeSlots = [];
-    a.className = "avail busy";
-    a.textContent = "Couldn't scan — " + e.message;
-  }
-}
-
-function fillReview(p) {
-  $("fName").value = p.name;
-  $("fLoc").value = p.location;
-  $("fDate").value = p.date;
-  $("fTime").value = p.time;
-  $("fDur").value = p.duration;
-  state.clientType = p.clientType;
-  state.open = !!p.open;
-  const wk = thisOrNextWeekRange();
-  state.rangeStart = p.rangeStart || wk.start;
-  state.rangeEnd = p.rangeEnd || wk.end;
-  $("fRangeStart").value = state.rangeStart;
-  $("fRangeEnd").value = state.rangeEnd;
-  state.rangeSlots = [];
-  document.querySelectorAll("#clientType .pill").forEach(pill =>
-    pill.classList.toggle("active", pill.dataset.type === p.clientType));
-  ["dateField","timeField","locField","durField"].forEach(f => $(f).classList.remove("guessed"));
-  const map = { date:"dateField", time:"timeField", location:"locField", duration:"durField" };
-  p.guessed.forEach(g => { if (map[g]) $(map[g]).classList.add("guessed"); });
-
-  syncMode();   // show range fields or day/time fields to match the detected intent
-}
-
-$("clientType").addEventListener("click", e => {
-  if (!e.target.dataset.type) return;
-  state.clientType = e.target.dataset.type;
-  document.querySelectorAll("#clientType .pill").forEach(p => p.classList.toggle("active", p === e.target));
-});
-
-$("sendVia").addEventListener("click", e => {
-  if (!e.target.dataset.send) return;
-  state.sendVia = e.target.dataset.send;
-  document.querySelectorAll("#sendVia .pill").forEach(p => p.classList.toggle("active", p === e.target));
-  syncSendUi();
-});
-
-$("inviteToggle").addEventListener("click", e => {
-  if (!e.target.dataset.invite) return;
-  state.calInvite = e.target.dataset.invite === "on";
-  settings.calInvite = state.calInvite;
-  saveSettingsToStore();
-  syncInviteUi();
-});
-
-function syncInviteUi() {
-  document.querySelectorAll("#inviteToggle .pill").forEach(p =>
-    p.classList.toggle("active", (p.dataset.invite === "on") === state.calInvite));
-}
-
-function syncSendUi() {
-  const email = state.sendVia === "email";
-  $("confirmBtn").textContent = email ? "Confirm, add form & open Gmail" : "Confirm, add form & open WhatsApp";
-  $("contactLabel").textContent = email ? "Client email" : "WhatsApp number";
-  $("fContact").placeholder = email ? "name@email.com" : "+44…";
-}
-
-["fDate","fTime","fDur","fName"].forEach(id =>
-  $(id).addEventListener("change", () => {
-    if (state.open) { if (id === "fDur") scanRange(); }   // re-scan if duration changes
-    else checkAvailability();
-  }));
-// range inputs just update state; Phoenix presses draft to re-scan
-["fRangeStart","fRangeEnd"].forEach(id =>
-  $(id).addEventListener("change", () => {
-    state.rangeStart = $("fRangeStart").value || state.rangeStart;
-    state.rangeEnd = $("fRangeEnd").value || state.rangeEnd;
-  }));
-
-// Tap an offered slot to load it into the booking fields and switch to "specific time"
-$("slots").addEventListener("click", e => {
-  const pick = e.target.closest(".slot-pick");
-  if (!pick) return;
-  $("fDate").value = pick.dataset.d;
-  $("fTime").value = pick.dataset.t;
-  state.open = false;
-  syncMode();
-  checkAvailability();
-  showToast("Loaded " + fmtDate(pick.dataset.d) + " at " + fmtTime(pick.dataset.t) + " — re-draft or confirm below.");
-});
-
-// Re-draft current stage (Step 2 button)
-$("redraftBtn").addEventListener("click", () => draftReply(state.stage));
-
-async function checkAvailability() {
-  const a = $("avail"), sl = $("slots");
-  a.className = "avail checking";
-  a.innerHTML = '<span class="spinner"></span>Checking your calendar…';
-  sl.classList.add("hidden");
-  try {
-    const r = await availability($("fDate").value, $("fTime").value, parseInt($("fDur").value,10));
-    state.lastAvail = r;
-    if (r.free) {
-      a.className = "avail free";
-      a.textContent = r.simulated ? "That slot looks free. (Connect Google for a real check.)" : "That slot is free on your calendar.";
-    } else {
-      a.className = "avail busy";
-      a.textContent = "Clash: " + r.reason + ".";
-    }
-    if (r.freeWindows && r.freeWindows.length) {
-      sl.classList.remove("hidden");
-      sl.innerHTML = "Free that day: " + r.freeWindows.map(w => "<b>" + w.label + "</b>").join(" · ");
-    }
-  } catch (e) {
-    state.lastAvail = null;
-    a.className = "avail busy";
-    a.textContent = "Couldn't check — " + e.message;
-  }
-}
-
+function addDaysISO(iso, n) { const d = new Date(iso + "T00:00:00"); d.setDate(d.getDate() + n); return isoLocal(d); }
 function fmtDate(iso) {
   const d = new Date(iso + "T00:00:00");
   return d.toLocaleDateString("en-GB", { weekday:"long", day:"numeric", month:"long" });
@@ -1064,212 +502,323 @@ function fmtTime(t) {
   const hh = ((h+11)%12)+1;
   return m ? `${hh}.${String(m).padStart(2,"0")}${ampm}` : `${hh}${ampm}`;
 }
-function shortLoc(loc) { return loc.includes("Waterloo") ? "Waterloo" : "Bethnal Green"; }
 
-// ===== Reply drafting: Claude first, template fallback =====
-async function draftReply(stage) {
-  state.stage = stage;
-  const ta = $("replyText");
-  const by = $("draftBy");
+// Next ~6 weeks of offered weekdays, starting today (if today is offered) or later.
+function buildOfferedDays(fromISO) {
+  const start = fromISO || todayISO();
+  const out = [];
+  for (let i = 0; i < 42 && out.length < 18; i++) {
+    const iso = addDaysISO(start, i);
+    const dow = new Date(iso + "T00:00:00").getDay();
+    if (OFFERED_DOW.includes(dow)) out.push(iso);
+  }
+  return out;
+}
+// The hourly start times inside the working window (latest start still fits a session).
+function slotTimes() {
+  const toMin = t => { const [h,m] = t.split(":").map(Number); return h*60 + m; };
+  const start = toMin(settings.dayStart), end = toMin(settings.dayEnd);
+  const out = [];
+  for (let m = start; m + SLOT_MIN <= end; m += 60) {
+    out.push(String(Math.floor(m/60)).padStart(2,"0") + ":" + String(m%60).padStart(2,"0"));
+  }
+  return out;
+}
+
+// =====================================================================
+//  LIVE AVAILABILITY GRID
+// =====================================================================
+function venueKey() { return $("fLoc").value; }
+function visibleDays() { return state.offeredDays.slice(state.winIdx, state.winIdx + 3); }
+
+async function loadWindow() {
+  const wrap = $("pickWrap");
+  if (!tokenValid()) {
+    $("pickEmpty") && ($("pickEmpty").textContent = "Connect Google Calendar (in Settings) to load live availability.");
+    wrap.innerHTML = '<div class="pick-empty">Connect Google Calendar (in Settings), then tap Find times again.</div>';
+    return;
+  }
+  const days = visibleDays();
+  if (!days.length) { wrap.innerHTML = '<div class="pick-empty">No more offered days ahead.</div>'; return; }
+  const key = venueKey() + "|" + days[0] + "|" + days[days.length-1];
+  $("pickTitle").textContent = days.map(d => new Date(d+"T00:00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})).join("  ·  ");
+  wrap.innerHTML = '<div class="pick-empty"><span class="spinner"></span>Reading the calendars…</div>';
+
+  const cals = VENUES[venueKey()].cals;
+  const timeMin = new Date(days[0] + "T00:00:00").toISOString();
+  const timeMax = new Date(days[days.length-1] + "T23:59:59").toISOString();
+  try {
+    const results = await Promise.all(cals.map(c => timedBusy(c, timeMin, timeMax).catch(() => [])));
+    state.busyByCal = {};
+    cals.forEach((c, i) => state.busyByCal[c] = results[i]);
+    state.loadedKey = key;
+    renderGrid(days);
+  } catch (e) {
+    wrap.innerHTML = '<div class="pick-empty">Couldn\'t read availability — ' + e.message + '</div>';
+  }
+}
+
+function slotIsFree(dateISO, hhmm) {
+  const s = new Date(`${dateISO}T${hhmm}:00`);
+  const e = new Date(s.getTime() + SLOT_MIN * 60000);
+  const clearOn = cid => !(state.busyByCal[cid] || []).some(b => s < b.e && e > b.s);
+  const v = VENUES[venueKey()];
+  if (v.mode === "anyRoom") return v.cals.some(clearOn);  // at least one room open
+  return v.cals.every(clearOn);                            // shared studio: nothing overlaps
+}
+function isSelected(dateISO, hhmm) { return state.selected.some(x => x.dateISO === dateISO && x.hhmm === hhmm); }
+
+function renderGrid(days) {
+  const times = slotTimes();
+  const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  let html = '<div class="pick-grid">';
+  html += '<div class="pg-h corner"></div>';
+  days.forEach(iso => {
+    const d = new Date(iso + "T00:00:00");
+    html += `<div class="pg-h"><span class="dow">${dayNames[d.getDay()]}</span>${d.getDate()}/${d.getMonth()+1}</div>`;
+  });
+  times.forEach(t => {
+    html += `<div class="pg-time">${fmtTime(t)}</div>`;
+    days.forEach(iso => {
+      const past = new Date(`${iso}T${t}:00`) < new Date();
+      const free = !past && slotIsFree(iso, t);
+      const sel = isSelected(iso, t);
+      if (sel) html += `<div class="pg-slot sel" data-d="${iso}" data-t="${t}"><span class="tick">✓</span></div>`;
+      else if (free) html += `<div class="pg-slot free" data-d="${iso}" data-t="${t}">+</div>`;
+      else html += `<div class="pg-slot busy">·</div>`;
+    });
+  });
+  html += '</div>';
+  $("pickWrap").innerHTML = html;
+}
+
+function toggleSlot(dateISO, hhmm) {
+  const i = state.selected.findIndex(x => x.dateISO === dateISO && x.hhmm === hhmm);
+  if (i >= 0) state.selected.splice(i, 1);
+  else state.selected.push({ dateISO, hhmm, label: fmtDate(dateISO) + " at " + fmtTime(hhmm) });
+  state.selected.sort((a,b) => (a.dateISO + a.hhmm).localeCompare(b.dateISO + b.hhmm));
+  renderGrid(visibleDays());
+  renderChips();
+}
+function renderChips() {
+  const box = $("chips");
+  if (!state.selected.length) {
+    box.classList.add("hidden");
+    $("draftBtn").disabled = true;
+    return;
+  }
+  box.classList.remove("hidden");
+  box.innerHTML = "Offering: " + state.selected.map(s => `<span class="chip"><b>${s.label}</b></span>`).join("");
+  $("draftBtn").disabled = false;
+}
+
+// =====================================================================
+//  READ MESSAGE — Claude extraction (preferred) or rules fallback
+// =====================================================================
+async function extractFields(msg) {
+  if (aiReady()) { try { return await extractWithClaude(msg); } catch (e) { return parseMessage(msg); } }
+  return parseMessage(msg);
+}
+async function extractWithClaude(msg) {
+  const now = new Date();
+  const todayStr = now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const sys =
+    "You extract booking intent from a client's message to a London craniosacral therapist. " +
+    "Today is " + todayStr + " (" + todayISO() + "), timezone Europe/London. " +
+    "Return ONLY a JSON object, no prose, with keys: " +
+    "name (string, empty if unknown), location ('waterloo' | 'chalkfarm' | ''), " +
+    "clientType ('new' | 'returning' | ''), " +
+    "intent ('open' if they ask broadly what's free over a span, 'specific' if they name a day/time), " +
+    "fromDate ('YYYY-MM-DD' earliest day they're hinting at, or ''). " +
+    "Use '' for anything not stated.";
+  const text = await askClaude(sys, msg);
+  const m = text.match(/\{[\s\S]*\}/);
+  if (!m) throw new Error("no json");
+  return normalise(JSON.parse(m[0]));
+}
+function normalise(j) {
+  const loc = j.location === "chalkfarm" ? "chalkfarm" : "waterloo";
+  return {
+    name: j.name || "",
+    location: loc,
+    clientType: j.clientType === "returning" ? "returning" : "new",
+    intent: j.intent === "specific" ? "specific" : "open",
+    fromDate: /^\d{4}-\d{2}-\d{2}$/.test(j.fromDate || "") ? j.fromDate : ""
+  };
+}
+function parseMessage(msg) {
+  const lower = msg.toLowerCase();
+  const nameMatch = msg.match(/([A-Z][a-z]+)\s*$/);
+  const loc = lower.includes("chalk") || lower.includes("bethnal") ? "chalkfarm" : "waterloo";
+  const days = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+  const named = days.some(d => lower.includes(d)) || /\btoday\b|\btomorrow\b/.test(lower) || /\d\s*(am|pm|:\d)/.test(lower);
+  const intent = named && !/next week|any day|some ?time|what.*free|which days/.test(lower) ? "specific" : "open";
+  return { name: nameMatch ? nameMatch[1] : "", location: loc, clientType: "new", intent, fromDate: "" };
+}
+
+function fillReview(p) {
+  $("fName").value = p.name;
+  $("fLoc").value = p.location;
+  state.clientType = p.clientType;
+  state.intent = p.intent;
+  state.parsed = p;
+  document.querySelectorAll("#clientType .pill").forEach(pill => pill.classList.toggle("active", pill.dataset.type === p.clientType));
+  document.querySelectorAll("#intentToggle .pill").forEach(pill => pill.classList.toggle("active", pill.dataset.intent === p.intent));
+}
+
+// =====================================================================
+//  DRAFTING
+// =====================================================================
+function shortLoc(key) { return VENUES[key] ? VENUES[key].label : key; }
+
+async function draftReply() {
+  const ta = $("replyText"), by = $("draftBy");
   ta.value = ""; ta.placeholder = "Drafting…";
-  by.innerHTML = '<span class="spinner"></span>Asking Claude…';
-  updateMetaAndNote(stage);
-
-  const ctx = replyContext(stage);
+  by.innerHTML = '<span class="spinner"></span>Drafting…';
+  const ctx = replyContext();
   if (aiReady()) {
     try {
       const text = await askClaude(ctx.system, ctx.user);
-      ta.value = text || templateReply(stage);
+      ta.value = text || templateReply();
       by.textContent = text ? "Drafted by Claude · edit freely before sending" : "Claude returned nothing — used template";
       return;
     } catch (e) {
-      ta.value = templateReply(stage);
+      ta.value = templateReply();
       by.textContent = "Claude unavailable (" + e.message + ") — used template";
       return;
     }
   }
-  ta.value = templateReply(stage);
+  ta.value = templateReply();
   by.textContent = "Template draft — add a Worker URL in Settings for Claude-written replies";
 }
 
-function replyContext(stage) {
+function isConfirm() { return state.intent === "specific" && state.selected.length === 1; }
+
+function replyContext() {
   const name = $("fName").value || "there";
-  const date = fmtDate($("fDate").value);
-  const time = fmtTime($("fTime").value);
-  const loc = shortLoc($("fLoc").value);
+  const loc = shortLoc(venueKey());
   const isNew = state.clientType === "new";
-  const wantInvite = state.sendVia === "email" && state.calInvite;
+  const opts = state.selected.map(s => s.label).join("; ");
   const fields = [
     "Client name: " + name,
     "Client type: " + (isNew ? "new (first session)" : "returning"),
     "Location: " + loc,
-    "Date: " + date,
-    "Time: " + time,
-    "Channel: " + (state.sendVia === "email" ? "email" : "WhatsApp"),
     "Sign off with exactly: " + settings.signoff,
-    "Original message from client: \"" + $("msgInput").value.trim() + "\""
+    "Original message from client: \"" + $("msgInput").value.trim() + "\"",
+    "Times Phoenix is offering: " + opts
   ];
   let task;
-  if (stage === "offer") {
-    fields.push("Calendar: " + describeAvail());
-    if (state.open) {
-      task = state.rangeSlots && state.rangeSlots.length
-        ? "Write the FIRST reply. The client asked for availability over a range. Offer the specific free times listed above (give them as friendly options) and ask which one suits. Do not confirm yet. Do not mention any intake form."
-        : "Write the FIRST reply. The client asked for availability but nothing is free in that window. Warmly ask which couple of days would suit and say you'll check. Do not mention any intake form.";
-    } else {
-      task = state.lastAvail && !state.lastAvail.free
-        ? "Write the FIRST reply. The requested time clashes, so apologise lightly and offer the free times listed above, asking which suits. Do not confirm a booking yet. Do not mention any intake form."
-        : "Write the FIRST reply. Warmly say the requested time works and you've pencilled them in, and invite them to confirm. Do not mention any intake form yet.";
-    }
+  if (isConfirm()) {
+    task = "Write the reply confirming this single time clearly and warmly. The client named it and it's free.";
+    if (isNew) { fields.push("Intake form link: " + settings.intake); task += " Add a short line asking them to fill in the intake form before the first session."; }
   } else {
-    if (wantInvite) fields.push("Mention they'll get a calendar invite to tap Yes on.");
-    if (isNew) fields.push("Intake form link (include naturally, ask them to fill it in before the first session): " + settings.intake);
-    task = "Write the CONFIRMATION reply. The client has chosen this time. Confirm it clearly and warmly."
-      + (isNew ? " Include the intake form link with a short line asking them to complete it before the first session." : " No form is needed.");
+    task = "Write the first reply. Offer the times listed above as friendly options and ask which suits. Do not confirm yet. "
+         + "Close with: 'If none of those work, let me know and we'll find another time.' Do not mention any intake form.";
   }
-  return {
-    system: VOICE + " " + task,
-    user: fields.join("\n")
-  };
+  return { system: VOICE + " " + task, user: fields.join("\n") };
 }
-
-function templateReply(stage) {
+function templateReply() {
   const name = $("fName").value || "there";
-  const date = fmtDate($("fDate").value);
-  const time = fmtTime($("fTime").value);
-  const loc = shortLoc($("fLoc").value);
+  const loc = shortLoc(venueKey());
   const isNew = state.clientType === "new";
-
-  if (stage === "offer") {
-    if (state.open) {
-      const opts = (state.rangeSlots || []).map(s => s.label).join(", ");
-      return opts
-        ? `Hi ${name}, lovely to hear from you. I've got a few times free at ${loc}: ${opts}. Would any of those suit? ${settings.signoff}`
-        : `Hi ${name}, lovely to hear from you. Let me know a couple of days that suit at ${loc} and I'll check what's free. ${settings.signoff}`;
-    }
-    if (state.lastAvail && !state.lastAvail.free) {
-      const opts = (state.lastAvail.freeWindows || []).map(w => w.label).join(", ");
-      return `Hi ${name}, lovely to hear from you. ${time} on ${date} is already taken, sorry. `
-        + (opts ? `I'm free ${opts} that day — would any of those suit?` : `Could you let me know another time that works and I'll check?`)
-        + ` ${settings.signoff}`;
-    }
-    return `Hi ${name}, lovely to hear from you. ${date} at ${time} at ${loc} works nicely, I've pencilled you in. Just let me know it's good for you and I'll confirm. ${settings.signoff}`;
+  if (isConfirm()) {
+    const s = state.selected[0];
+    const intake = isNew ? ` As it's your first session, here's a short intake form to fill in before we meet: ${settings.intake}` : "";
+    return `Hi ${name}, that's confirmed: ${s.label} at ${loc}.${intake} Looking forward to it. ${settings.signoff}`;
   }
-
-  // confirm
-  let inviteLine = "", intakeLine = "";
-  if (state.sendVia === "email" && state.calInvite) inviteLine = " You'll get a calendar invite, just tap Yes to confirm.";
-  if (isNew) intakeLine = ` As it's your first session, here's a short intake form to fill in before we meet: ${settings.intake}`;
-  return `Hi ${name}, that's confirmed: ${date} at ${time} at ${loc}.${inviteLine}${intakeLine} Looking forward to it. ${settings.signoff}`;
+  const opts = state.selected.map(s => s.label).join(", ");
+  return `Hi ${name}, lovely to hear from you. I've got a few times free at ${loc}: ${opts}. Would any of those suit? If none of those work, let me know and we'll find another time. ${settings.signoff}`;
 }
 
-function updateMetaAndNote(stage) {
-  const name = $("fName").value || "there";
-  const date = fmtDate($("fDate").value);
-  const time = fmtTime($("fTime").value);
-  const loc = shortLoc($("fLoc").value);
-  const isNew = state.clientType === "new";
-  const note = $("intakeNote");
-
-  if (stage === "confirm" && isNew) {
-    note.classList.remove("hidden");
-    note.textContent = state.sendVia === "email"
-      ? "New client: intake form link included in the confirmation."
-      : "New client via WhatsApp: the intake form link is in the confirmation message.";
-  } else {
-    note.classList.add("hidden");
-  }
-  $("eventMeta").textContent =
-    `Event: CST Session — ${name}${isNew ? " (new client)" : ""}, ${loc} · ${date}, ${time} · ${$("fDur").value} min`;
-}
-
-// ===== STEP 3: Confirm time, add form, create event, hand off =====
-$("confirmBtn").addEventListener("click", () => {
-  if (state.lastAvail && state.lastAvail.free === false) {
-    showToast("That slot still clashes — change the time or re-check before booking.");
-    return;
-  }
-  if (!tokenValid()) {
-    showToast("Connecting Google first…");
-    connectGoogle(doConfirm);
-    return;
-  }
-  doConfirm();
-});
-
-async function doConfirm() {
-  const btn = $("confirmBtn");
-  const original = btn.textContent;
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Confirming…';
-  try {
-    // 1. Re-draft as a confirmation (adds form link for new clients)
-    await draftReply("confirm");
-    // 2. Create the calendar event
-    const event = await createCalendarEvent();
-    state.lastEvent = event;
-    const linkBox = $("eventLink");
-    linkBox.classList.remove("hidden");
-    const attendeeNote = (state.sendVia === "email" && $("fContact").value.trim())
-      ? " The client has been emailed an invite to accept." : "";
-    linkBox.innerHTML = `Event created on your calendar.${attendeeNote} <a href="${event.htmlLink}" target="_blank">Open it</a>`;
-    // 3. Hand off the reply
-    openReplyHandoff();
-  } catch (e) {
-    showToast("Couldn't complete: " + e.message);
-  } finally {
-    btn.disabled = false; btn.textContent = original;
-  }
-}
-
+// =====================================================================
+//  HAND-OFF (copy / WhatsApp / Gmail) — read-only, nothing is booked
+// =====================================================================
 function copyReply(text) {
-  if (navigator.clipboard && window.isSecureContext) {
-    return navigator.clipboard.writeText(text).then(()=>true).catch(()=>fallbackCopy(text));
-  }
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text).then(()=>true).catch(()=>fallbackCopy(text));
   return Promise.resolve(fallbackCopy(text));
 }
 function fallbackCopy(text) {
   try {
     const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.style.position = "fixed"; ta.style.top = "-9999px";
-    document.body.appendChild(ta);
-    ta.focus(); ta.select();
-    const ok = document.execCommand("copy");
-    document.body.removeChild(ta);
-    return ok;
+    ta.value = text; ta.style.position = "fixed"; ta.style.top = "-9999px";
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    const ok = document.execCommand("copy"); document.body.removeChild(ta); return ok;
   } catch (e) { return false; }
 }
-
-function openReplyHandoff() {
-  if (!$("replyText").value.trim()) draftReply(state.stage);
-  const reply = $("replyText").value;
-  const contact = $("fContact").value.trim();
-  copyReply(reply).then(ok => {
-    showToast(ok ? "Reply copied — opening WhatsApp…"
-                 : "Full reply is pre-typed, ready to send.");
-  });
-  if (state.sendVia === "email") {
-    const url = "https://mail.google.com/mail/?view=cm&fs=1"
-      + "&to=" + encodeURIComponent(contact)
-      + "&su=" + encodeURIComponent("Your session booking")
-      + "&body=" + encodeURIComponent(reply);
-    window.open(url, "_blank");
-  } else {
-    const num = contact.replace(/[^\d]/g, "");
-    if (num) {
-      window.location.href = "whatsapp://send?phone=" + num + "&text=" + encodeURIComponent(reply);
-    } else {
-      window.open("https://wa.me/?text=" + encodeURIComponent(reply), "_blank");
-    }
-  }
-}
-
 function showToast(msg) {
-  const t = $("toast");
-  t.textContent = msg;
-  t.classList.add("show");
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
   setTimeout(() => t.classList.remove("show"), 3000);
 }
+
+// =====================================================================
+//  WIRING
+// =====================================================================
+$("intentToggle").addEventListener("click", e => {
+  if (!e.target.dataset.intent) return;
+  state.intent = e.target.dataset.intent;
+  document.querySelectorAll("#intentToggle .pill").forEach(p => p.classList.toggle("active", p === e.target));
+});
+$("clientType").addEventListener("click", e => {
+  if (!e.target.dataset.type) return;
+  state.clientType = e.target.dataset.type;
+  document.querySelectorAll("#clientType .pill").forEach(p => p.classList.toggle("active", p === e.target));
+});
+
+$("readBtn").addEventListener("click", async () => {
+  const msg = $("msgInput").value.trim();
+  if (!msg) { showToast("Paste a message first."); return; }
+  const btn = $("readBtn");
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Reading…';
+  let p; try { p = await extractFields(msg); } catch (e) { p = parseMessage(msg); }
+  fillReview(p);
+  $("reviewBlock").classList.remove("hidden");
+  btn.disabled = false; btn.textContent = "Read message again";
+  $("reviewBlock").scrollIntoView({ behavior: "smooth", block: "nearest" });
+});
+
+$("findBtn").addEventListener("click", () => {
+  state.offeredDays = buildOfferedDays(state.parsed.fromDate || todayISO());
+  state.winIdx = 0;
+  state.selected = [];
+  renderChips();
+  $("pickCard").classList.remove("hidden");
+  $("pickCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  if (!tokenValid()) { connectGoogle(loadWindow); } else { loadWindow(); }
+});
+
+$("fLoc").addEventListener("change", () => { state.selected = []; renderChips(); if (!$("pickCard").classList.contains("hidden")) loadWindow(); });
+$("pickPrev").addEventListener("click", () => { if (state.winIdx >= 3) { state.winIdx -= 3; loadWindow(); } });
+$("pickNext").addEventListener("click", () => { if (state.winIdx + 3 < state.offeredDays.length) { state.winIdx += 3; loadWindow(); } });
+
+$("pickWrap").addEventListener("click", e => {
+  const cell = e.target.closest(".pg-slot.free, .pg-slot.sel");
+  if (!cell || !cell.dataset.d) return;
+  toggleSlot(cell.dataset.d, cell.dataset.t);
+});
+
+$("draftBtn").addEventListener("click", async () => {
+  if (!state.selected.length) return;
+  const btn = $("draftBtn");
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Drafting…';
+  await draftReply();
+  btn.disabled = false; btn.textContent = "Draft reply";
+  $("replyCard").classList.remove("hidden");
+  $("replyCard").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+$("redraftBtn").addEventListener("click", draftReply);
+
+$("copyBtn").addEventListener("click", () => {
+  copyReply($("replyText").value).then(ok => showToast(ok ? "Reply copied." : "Couldn't copy — select the text and copy manually."));
+});
+$("waBtn").addEventListener("click", () => {
+  copyReply($("replyText").value);
+  window.open("https://wa.me/?text=" + encodeURIComponent($("replyText").value), "_blank");
+});
+$("gmailBtn").addEventListener("click", () => {
+  const url = "https://mail.google.com/mail/?view=cm&fs=1&su=" + encodeURIComponent("Your session")
+    + "&body=" + encodeURIComponent($("replyText").value);
+  window.open(url, "_blank");
+});
 
 // ---------- TABS ----------
 $("tabs").addEventListener("click", e => {
@@ -1285,29 +834,20 @@ function fillSettingsForm() {
   $("setIntake").value   = settings.intake;
   $("setLoc1").value     = settings.loc1;
   $("setLoc2").value     = settings.loc2;
-  $("setDur").value      = settings.dur;
   $("setSignoff").value  = settings.signoff;
   $("setWorker").value   = settings.worker;
   $("setDayStart").value = settings.dayStart;
   $("setDayEnd").value   = settings.dayEnd;
 }
-function applyLocationsToSelect() {
-  const sel = $("fLoc");
-  sel.options[0].value = settings.loc1; sel.options[0].textContent = shortLoc(settings.loc1) + " — " + settings.loc1;
-  sel.options[1].value = settings.loc2; sel.options[1].textContent = shortLoc(settings.loc2) + " — " + settings.loc2;
-}
 $("saveSettings").addEventListener("click", () => {
   settings.intake   = $("setIntake").value.trim() || DEFAULTS.intake;
   settings.loc1     = $("setLoc1").value.trim()   || DEFAULTS.loc1;
   settings.loc2     = $("setLoc2").value.trim()   || DEFAULTS.loc2;
-  settings.dur      = $("setDur").value;
   settings.signoff  = $("setSignoff").value.trim() || DEFAULTS.signoff;
   settings.worker   = $("setWorker").value.trim();
   settings.dayStart = $("setDayStart").value || DEFAULTS.dayStart;
   settings.dayEnd   = $("setDayEnd").value || DEFAULTS.dayEnd;
   saveSettingsToStore();
-  applyLocationsToSelect();
-  $("fDur").value = settings.dur;
   setAiStatus();
   $("saveBar").textContent = "Saved.";
   setTimeout(() => $("saveBar").textContent = "", 1800);
@@ -1316,22 +856,8 @@ $("saveSettings").addEventListener("click", () => {
 $("calBtn").addEventListener("click", () => connectGoogle());
 $("calSignOut").addEventListener("click", signOutGoogle);
 
-// ---------- CALENDAR PEEK WIRING ----------
-$("calPick").addEventListener("change", () => {
-  settings.calendarId = $("calPick").value;
-  saveSettingsToStore();
-  loadPeek();
-});
-$("peekDate").addEventListener("change", loadPeek);
-$("peekCard").addEventListener("toggle", () => { if ($("peekCard").open) loadPeek(); });
-
 // ---------- INIT ----------
 fillSettingsForm();
-applyLocationsToSelect();
-$("fDur").value = settings.dur;
-$("peekDate").value = todayISO();
-syncSendUi();
-syncInviteUi();
 setAiStatus();
 initGoogle();
 </script>
