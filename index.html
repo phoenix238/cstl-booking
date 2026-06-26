@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Intake & Booking — Phoenix</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="CSTL Booking">
+<meta name="theme-color" content="#5b6b5a">
 <script src="https://accounts.google.com/gsi/client" async></script>
 <style>
   :root {
@@ -234,7 +240,13 @@
   }
   .ucg-slot.free { background: #eef3ed; color: var(--accent); border: 1px dashed #b5c8b3; }
   .ucg-slot.free:hover { background: var(--accent-soft); border-color: var(--accent); }
+  .ucg-slot.suggested { background: #fef3e2; color: #a8643c; border: 2px solid #e8a857; }
+  .ucg-slot.suggested:hover { background: #fde8c8; }
   .ucg-slot.sel { background: var(--accent); color: #fff; border: 1px solid var(--accent); }
+
+  .view-toggle { display:flex; gap:6px; justify-content:center; margin-bottom:12px; }
+  .view-toggle button { font-size:12px; padding:5px 10px; border-radius:8px; border:1px solid var(--line); background:#fff; color:var(--ink-soft); cursor:pointer; font-family:inherit; }
+  .view-toggle button.active { background:var(--accent); color:#fff; border-color:var(--accent); }
 
   /* event block */
   .ucg-event {
@@ -334,7 +346,8 @@
       <div class="booking-banner hidden" id="calBookingBanner">
         <div style="flex:1;">
           <b>Picking times</b> for <span id="bannerName">—</span> at <span id="bannerLoc">—</span><br>
-          <span style="font-size:12px;color:var(--ink-soft);">Tap a green slot to select it. Tap again to deselect. Pick as many as you like, then draft.</span>
+          <span style="font-size:12px;color:var(--ink-soft);">All free slots shown. <span style="color:#a8643c;">Amber</span> = what they asked for. Tap to select, tap again to deselect.</span>
+          <div id="bannerMsg" style="margin-top:6px;font-size:12px;color:var(--ink-soft);font-style:italic;border-left:2px solid #b5c8b3;padding-left:8px;display:none;"></div>
         </div>
         <button class="btn ghost" id="bannerBack" style="padding:7px 12px;font-size:13px;">← Back</button>
       </div>
@@ -344,6 +357,14 @@
         <button class="btn ghost" id="calPrevWeek">‹</button>
         <div class="cal-heading" id="calHeading">—</div>
         <button class="btn ghost" id="calNextWeek">›</button>
+      </div>
+
+      <!-- Days view toggle -->
+      <div class="view-toggle" id="viewToggle">
+        <button data-days="1">1 day</button>
+        <button data-days="3">3 days</button>
+        <button data-days="5">5 days</button>
+        <button data-days="7" class="active">7 days</button>
       </div>
       <div style="text-align:center;margin-bottom:14px;">
         <button class="btn ghost" id="calTodayBtn" style="padding:7px 14px;font-size:13px;">Today</button>
@@ -363,10 +384,15 @@
       <!-- Chips + Draft (shown in booking mode) -->
       <div class="hidden" id="calPickSection" style="margin-top:18px;padding-top:16px;border-top:1px solid var(--line);">
         <div class="chips hidden" id="chips"></div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);margin-top:10px;cursor:pointer;">
+          <input type="checkbox" id="holdCheck" style="width:15px;height:15px;accent-color:var(--accent);">
+          Hold these times on calendar (creates placeholder events)
+        </label>
         <div class="btn-row" style="margin-top:10px;">
           <button class="btn" id="draftBtn" disabled>Draft reply</button>
           <button class="btn ghost" id="clearSlotsBtn">Clear</button>
         </div>
+        <p id="holdStatus" style="font-size:12px;color:var(--ink-soft);margin:6px 0 0;display:none;"></p>
       </div>
 
       <p class="help" style="margin-top:14px;" id="calHelp">Your calendar — all events from connected sources shown as blocks. Offered days (Mon/Wed/Thu/Fri) have a light green header. When picking times, available slots appear as green outlines — tap to select.</p>
@@ -437,6 +463,13 @@
 
 <div class="toast" id="toast"></div>
 
+<div id="gateOverlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+  <p style="font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin:0;">CSTL Booking</p>
+  <input id="gateInput" type="password" placeholder="Passcode" style="width:180px;padding:12px 16px;border:1px solid var(--line);border-radius:10px;font-size:18px;letter-spacing:.2em;text-align:center;font-family:inherit;background:#fff;color:var(--ink);" autocomplete="current-password">
+  <button class="btn" onclick="checkGate()" style="width:180px;">Enter</button>
+  <p id="gateErr" style="color:var(--warn);font-size:13px;margin:0;visibility:hidden;">Incorrect passcode</p>
+</div>
+
 <script>
 // =====================================================================
 //  CONFIG
@@ -444,7 +477,7 @@
 const CONFIG = {
   GOOGLE_CLIENT_ID: "313104627584-bvabn7550jrr7m8q9popr0r5t2vr0fkt.apps.googleusercontent.com",
   TIMEZONE: "Europe/London",
-  SCOPES: "https://www.googleapis.com/auth/calendar.readonly",
+  SCOPES: "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events",
   WORKER_URL: ""
 };
 
@@ -479,13 +512,20 @@ const DEFAULTS = {
   loc2: "Chalk Farm Studio, NW1",
   signoff: "Phoenix x",
   worker: "",
-  dayStart: "11:00",
-  dayEnd: "20:30"
+  dayStart: "08:00",
+  dayEnd: "21:00"
 };
 let settings = loadSettings();
 
 function loadSettings() {
-  try { return Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem("cstlSettings") || "{}")); }
+  try {
+    const saved = JSON.parse(localStorage.getItem("cstlSettings") || "{}");
+    const merged = Object.assign({}, DEFAULTS, saved);
+    // migrate stale dayEnd values
+    if (!saved.dayEnd || saved.dayEnd <= "18:30") merged.dayEnd = DEFAULTS.dayEnd;
+    if (!saved.dayStart || saved.dayStart >= "11:00") merged.dayStart = DEFAULTS.dayStart;
+    return merged;
+  }
   catch (e) { return Object.assign({}, DEFAULTS); }
 }
 function saveSettingsToStore() { localStorage.setItem("cstlSettings", JSON.stringify(settings)); }
@@ -499,7 +539,8 @@ const state = {
   parsed: {},
   offeredDays: [],
   selected: [],
-  bookingMode: false
+  bookingMode: false,
+  requestedTime: ""
 };
 
 const $ = id => document.getElementById(id);
@@ -749,17 +790,19 @@ function renderUnifiedGrid(days) {
       bodyHtml += `<div class="ucg-hline ${isHour ? 'hour' : 'half'}" style="top:${i * HALF_PX}px"></div>`;
     }
 
-    // Booking slots (only when in booking mode, this is an offered day, and it's in the offered range)
-    if (state.bookingMode && isOffered && state.offeredDays.includes(iso)) {
+    // Booking slots — show on all days when in booking mode
+    if (state.bookingMode) {
       slotTimes().forEach(t => {
         const slotStart = new Date(`${iso}T${t}:00`);
         if (slotStart <= now) return;
         const free = slotIsFree(iso, t);
         if (!free) return;
         const sel = isSelected(iso, t);
+        const isSuggested = !sel && state.requestedTime && t === state.requestedTime && iso === state.parsed.fromDate;
         const top = timeToOffsetPx(t);
-        const cls = sel ? 'sel' : 'free';
-        bodyHtml += `<div class="ucg-slot ${cls}" style="top:${top + 2}px;height:${HOUR_PX - 4}px" data-d="${iso}" data-t="${t}">${sel ? '✓' : '+'}</div>`;
+        const cls = sel ? 'sel' : isSuggested ? 'suggested' : 'free';
+        const icon = sel ? '✓' : isSuggested ? '★' : '+';
+        bodyHtml += `<div class="ucg-slot ${cls}" style="top:${top + 2}px;height:${HOUR_PX - 4}px" data-d="${iso}" data-t="${t}">${icon}</div>`;
       });
     }
 
@@ -832,7 +875,8 @@ const calState = {
   enabled: new Set(CAL_SOURCES.filter(c => c.on).map(c => c.id)),
   weekKey: "",
   loading: false,
-  byDay: {}
+  byDay: {},
+  viewDays: 7
 };
 
 function escapeHtml(s) {
@@ -893,11 +937,23 @@ async function loadCalWeek(force) {
   }
 }
 
+function visibleDays() {
+  const allWeek = weekDays(calState.weekKey || mondayOf(calState.day));
+  if (calState.viewDays === 7) return allWeek;
+  if (calState.viewDays === 1) return [calState.day];
+  // 3 or 5: start from calState.day, capped to week
+  const idx = allWeek.indexOf(calState.day);
+  const start = idx < 0 ? 0 : idx;
+  return allWeek.slice(start, start + calState.viewDays);
+}
+
 function renderCal() {
   renderCalToggles();
-  const days = weekDays(calState.weekKey || mondayOf(calState.day));
-  renderWeekStrip(days);
-  renderUnifiedGrid(days);
+  renderWeekStrip(weekDays(calState.weekKey || mondayOf(calState.day)));
+  renderUnifiedGrid(visibleDays());
+  // sync toggle buttons
+  document.querySelectorAll("#viewToggle button").forEach(b =>
+    b.classList.toggle("active", parseInt(b.dataset.days) === calState.viewDays));
 
   const monday = calState.weekKey || mondayOf(calState.day);
   const lastDay = addDaysISO(monday, 6);
@@ -950,11 +1006,13 @@ async function extractWithClaude(msg) {
   const sys =
     "You extract booking intent from a client's message to a London craniosacral therapist. " +
     "Today is " + todayStr + " (" + todayISO() + "), timezone Europe/London. " +
+    "The therapist has two locations: 'waterloo' (Breathe London, Waterloo SE1) and 'chalkfarm' (Chalk Farm / Bethnal Green / NW1 area). " +
     "Return ONLY a JSON object, no prose, with keys: " +
     "name (string, empty if unknown), location ('waterloo' | 'chalkfarm' | ''), " +
     "clientType ('new' | 'returning' | ''), " +
     "intent ('open' if they ask broadly what's free over a span, 'specific' if they name a day/time), " +
-    "fromDate ('YYYY-MM-DD' earliest day they're hinting at, or ''). " +
+    "fromDate ('YYYY-MM-DD' earliest day they're hinting at, or ''), " +
+    "fromTime ('HH:MM' in 24h if they name a specific time, else ''). " +
     "Use '' for anything not stated.";
   const text = await askClaude(sys, msg);
   const m = text.match(/\{[\s\S]*\}/);
@@ -962,13 +1020,17 @@ async function extractWithClaude(msg) {
   return normalise(JSON.parse(m[0]));
 }
 function normalise(j) {
-  const loc = j.location === "chalkfarm" ? "chalkfarm" : "waterloo";
+  const locRaw = (j.location || "").toLowerCase();
+  const loc = (locRaw === "chalkfarm" || locRaw.includes("chalk") || locRaw.includes("bethnal")) ? "chalkfarm" : "waterloo";
+  let fromTime = "";
+  if (/^\d{2}:\d{2}$/.test(j.fromTime || "")) fromTime = j.fromTime;
   return {
     name: j.name || "",
     location: loc,
     clientType: j.clientType === "returning" ? "returning" : "new",
     intent: j.intent === "specific" ? "specific" : "open",
-    fromDate: /^\d{4}-\d{2}-\d{2}$/.test(j.fromDate || "") ? j.fromDate : ""
+    fromDate: /^\d{4}-\d{2}-\d{2}$/.test(j.fromDate || "") ? j.fromDate : "",
+    fromTime
   };
 }
 function parseMessage(msg) {
@@ -978,7 +1040,16 @@ function parseMessage(msg) {
   const days = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
   const named = days.some(d => lower.includes(d)) || /\btoday\b|\btomorrow\b/.test(lower) || /\d\s*(am|pm|:\d)/.test(lower);
   const intent = named && !/next week|any day|some ?time|what.*free|which days/.test(lower) ? "specific" : "open";
-  return { name: nameMatch ? nameMatch[1] : "", location: loc, clientType: "new", intent, fromDate: "" };
+  // extract time if mentioned e.g. "3pm", "14:00", "3.30pm"
+  let fromTime = "";
+  const tm = lower.match(/\b(\d{1,2})(?:[:\.](\d{2}))?\s*(am|pm)/);
+  if (tm) {
+    let h = parseInt(tm[1]); const mins = tm[2] || "00";
+    if (tm[3] === "pm" && h < 12) h += 12;
+    if (tm[3] === "am" && h === 12) h = 0;
+    fromTime = String(h).padStart(2,"0") + ":" + mins;
+  }
+  return { name: nameMatch ? nameMatch[1] : "", location: loc, clientType: "new", intent, fromDate: "", fromTime };
 }
 function fillReview(p) {
   $("fName").value = p.name;
@@ -1072,6 +1143,44 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove("show"), 3000);
 }
 
+// Hold calendar events
+const HOLD_CAL = {
+  chalkfarm: "chalkfarm215@gmail.com",
+  waterloo: "7cd19a8a0df5e5ff621f3400d0cc2ca78ee6b76b3d6f56740a4be51b03a3ec98@group.calendar.google.com"
+};
+async function createCalEvent(calId, title, dateISO, hhmm) {
+  const start = new Date(`${dateISO}T${hhmm}:00`);
+  const end   = new Date(start.getTime() + 60 * 60000);
+  const body = {
+    summary: title,
+    start: { dateTime: start.toISOString(), timeZone: CONFIG.TIMEZONE },
+    end:   { dateTime: end.toISOString(),   timeZone: CONFIG.TIMEZONE }
+  };
+  const r = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events`, {
+    method: "POST",
+    headers: { "Authorization": "Bearer " + googleToken.access_token, "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || r.status); }
+  return r.json();
+}
+async function holdSelectedSlots() {
+  const name = $("fName").value || "client";
+  const calId = HOLD_CAL[venueKey()] || HOLD_CAL.waterloo;
+  const title = `HOLD — ${name}`;
+  const statusEl = $("holdStatus");
+  statusEl.style.display = "block";
+  statusEl.textContent = "Creating holds…";
+  let ok = 0, fail = 0;
+  for (const s of state.selected) {
+    try { await createCalEvent(calId, title, s.dateISO, s.hhmm); ok++; }
+    catch (e) { fail++; console.warn("Hold failed:", e.message); }
+  }
+  statusEl.textContent = fail === 0
+    ? `${ok} hold${ok !== 1 ? "s" : ""} added to calendar.`
+    : `${ok} added, ${fail} failed — check you have edit access to that calendar.`;
+}
+
 function switchTab(tab) {
   document.querySelectorAll("#tabs .tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
   $("bookingView").classList.toggle("hidden", tab !== "booking");
@@ -1110,15 +1219,21 @@ $("findBtn").addEventListener("click", () => {
   state.offeredDays = buildOfferedDays(state.parsed.fromDate || todayISO());
   state.bookingMode = true;
   state.selected = [];
+  state.requestedTime = state.parsed.fromTime || "";
 
-  // Set calendar to the week of first offered day
-  if (state.offeredDays.length) calState.day = state.offeredDays[0];
+  // Set calendar to the week of the requested date, or first offered day
+  const startDay = state.parsed.fromDate || (state.offeredDays[0] || todayISO());
+  calState.day = startDay;
 
   // Show booking banner in calendar
   const banner = $("calBookingBanner");
   banner.classList.remove("hidden");
   $("bannerName").textContent = $("fName").value || "client";
   $("bannerLoc").textContent = shortLoc(venueKey());
+  const msgEl = $("bannerMsg");
+  const rawMsg = $("msgInput").value.trim();
+  if (rawMsg) { msgEl.textContent = rawMsg; msgEl.style.display = "block"; }
+  else { msgEl.style.display = "none"; }
   $("calPickSection").classList.remove("hidden");
   renderChips();
 
@@ -1143,11 +1258,13 @@ $("draftBtn").addEventListener("click", async () => {
   const btn = $("draftBtn");
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Drafting…';
   await draftReply();
+  if ($("holdCheck").checked) await holdSelectedSlots();
   btn.disabled = false; btn.textContent = "Draft reply";
   // Switch to booking tab to show the reply
   state.bookingMode = false;
   $("calBookingBanner").classList.add("hidden");
   $("calPickSection").classList.add("hidden");
+  $("holdCheck").checked = false;
   $("replyCard").classList.remove("hidden");
   switchTab("booking");
   $("replyCard").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1184,6 +1301,13 @@ $("calNextWeek").addEventListener("click", () => {
   loadCalWeek();
 });
 $("calTodayBtn").addEventListener("click", () => { calState.day = todayISO(); loadCalWeek(true); });
+
+$("viewToggle").addEventListener("click", e => {
+  const b = e.target.closest("button[data-days]");
+  if (!b) return;
+  calState.viewDays = parseInt(b.dataset.days);
+  renderCal();
+});
 
 $("calToggles").addEventListener("click", e => {
   const t = e.target.closest(".cal-toggle");
@@ -1235,10 +1359,35 @@ $("calBtn").addEventListener("click", () => connectGoogle());
 $("calSignOut").addEventListener("click", signOutGoogle);
 
 // ---------- INIT ----------
+// Passcode gate
+const GATE_KEY = 'cstl_auth';
+const GATE_HASH = '3d73cd5cb74f8ab1d4496133cde249d9825e0f19d0f1a011f46afc287f881299';
+async function checkGate() {
+  const val = $('gateInput').value;
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(val));
+  const hash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  if (hash === GATE_HASH) {
+    localStorage.setItem(GATE_KEY, '1');
+    $('gateOverlay').style.display = 'none';
+  } else {
+    $('gateErr').style.visibility = 'visible';
+    $('gateInput').value = '';
+    $('gateInput').focus();
+  }
+}
+$('gateInput').addEventListener('keydown', e => { if (e.key === 'Enter') checkGate(); });
+if (!localStorage.getItem(GATE_KEY)) {
+  $('gateOverlay').style.display = 'flex';
+  setTimeout(() => $('gateInput').focus(), 50);
+} else {
+  $('gateOverlay').style.display = 'none';
+}
+
 fillSettingsForm();
 setAiStatus();
 renderCalToggles();
 initGoogle();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
 </body>
 </html>
