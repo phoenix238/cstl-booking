@@ -1,5 +1,5 @@
 // Service worker — cache the app shell for offline/fast load
-const CACHE = 'cstl-v1';
+const CACHE = 'cstl-v2';
 const SHELL = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', e => {

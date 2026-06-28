@@ -1720,6 +1720,17 @@ setAiStatus();
 renderCalToggles();
 initGoogle();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+
+// Web Share Target — pre-fill message textarea when app is opened via share sheet
+(function() {
+  const sp = new URLSearchParams(location.search);
+  const sharedMsg = sp.get("msg");
+  if (sharedMsg) {
+    $("msgInput").value = sharedMsg;
+    history.replaceState({}, "", location.pathname);
+    $("bookingCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+})();
 </script>
 </body>
 </html>
