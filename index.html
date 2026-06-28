@@ -223,7 +223,7 @@
   .ucg-col-head.today { color: var(--accent); }
   .ucg-col-head.today .ucg-dow { color: var(--accent); opacity: .75; }
   .ucg-col-head.offered-day { background: #f0f5ef; }
-  .ucg-col-body { position: relative; background: #fff; }
+  .ucg-col-body { position: relative; background: #fff; touch-action: none; user-select: none; }
   .ucg-hline {
     position: absolute; left: 0; right: 0; pointer-events: none;
   }
@@ -470,7 +470,7 @@
       <div style="margin-bottom:18px;">
         <strong style="font-size:14px;">Google Calendar</strong>
         <div class="status-row"><span class="dot off" id="calDot"></span><span id="calStatus">Not connected</span></div>
-        <p class="help">Sign in once with the account that can see your Waterloo room calendars and Chalk Farm. The grid reads live availability. Sign-in lasts about an hour, then tap Connect again.<br>
+        <p class="help">Sign in once with the account that can see your Waterloo room calendars and Chalk Farm. The app reconnects automatically in the background each time you open it.<br>
         <button class="btn ghost" id="calBtn" style="margin-top:8px;padding:8px 14px;font-size:13px;">Connect Google Calendar</button>
         <button class="btn ghost" id="calSignOut" style="margin-top:8px;padding:8px 14px;font-size:13px;display:none;">Sign out</button></p>
       </div>
@@ -478,7 +478,7 @@
       <div>
         <strong style="font-size:14px;">Claude (reply drafting)</strong>
         <div class="status-row"><span class="dot off" id="aiDot"></span><span id="aiStatus">Not connected</span></div>
-        <p class="help">Replies are written by Claude through your Cloudflare Worker so your API key stays private. Without it, the page falls back to a plain template. <em>See WORKER-SETUP.md.</em></p>
+        <p class="help">Replies are written by Claude through your Cloudflare Worker so your API key stays private. Without it, the page falls back to a plain template. Find your Worker URL at <em>dash.cloudflare.com → Workers &amp; Pages</em>.</p>
         <div class="field" style="margin-top:8px;">
           <label>Worker URL</label>
           <input id="setWorker" type="text" placeholder="https://cstl-booking-ai.YOURNAME.workers.dev">
@@ -736,8 +736,15 @@ function initGoogle() {
     callback: (resp) => {
       if (resp.error) { setCalStatus("warn", "Sign-in failed: " + resp.error); return; }
       googleToken = { access_token: resp.access_token, expiry: Date.now() + (resp.expires_in * 1000) };
+      try { localStorage.setItem('cstl_gcal_linked', '1'); } catch(e) {}
       setCalStatus("on", "Connected — loading your calendar");
       if (pendingAfterAuth) { const fn = pendingAfterAuth; pendingAfterAuth = null; fn(); }
+    },
+    error_callback: (err) => {
+      if (err && err.type !== 'popup_closed') {
+        localStorage.removeItem('cstl_gcal_linked');
+        setCalStatus('off', 'Tap Connect to link Google Calendar');
+      }
     }
   });
   setCalStatus("off", "Ready — tap Connect Google Calendar");
@@ -762,7 +769,18 @@ function connectGoogle(after) {
 function signOutGoogle() {
   if (googleToken && googleReady()) { try { google.accounts.oauth2.revoke(googleToken.access_token); } catch(e){} }
   googleToken = null;
+  localStorage.removeItem('cstl_gcal_linked');
   setCalStatus("off", "Signed out");
+}
+
+function autoConnectGoogle() {
+  if (!CONFIG.GOOGLE_CLIENT_ID) return;
+  if (!localStorage.getItem('cstl_gcal_linked')) return;
+  loadGsiThen(() => {
+    if (!tokenClient) initGoogle();
+    if (!tokenClient) return;
+    tokenClient.requestAccessToken({ prompt: '' });
+  });
 }
 
 // Fetch all events (including titles, locations) for a calendar over a span
@@ -881,6 +899,43 @@ function toggleSlot(dateISO, hhmm) {
   renderChips();
   renderUnifiedGrid(weekDays(calState.weekKey || mondayOf(calState.day)));
 }
+function selectSlot(dateISO, hhmm) {
+  if (!state.selected.find(x => x.dateISO === dateISO && x.hhmm === hhmm))
+    state.selected.push({ dateISO, hhmm, label: fmtDate(dateISO) + " at " + fmtTime(hhmm) });
+}
+function deselectSlot(dateISO, hhmm) {
+  state.selected = state.selected.filter(x => !(x.dateISO === dateISO && x.hhmm === hhmm));
+}
+function slotsInRange(iso, t1, t2) {
+  const all = slotTimes();
+  const i1 = all.indexOf(t1), i2 = all.indexOf(t2);
+  if (i1 < 0 || i2 < 0) return (i1 >= 0 ? [t1] : (i2 >= 0 ? [t2] : []));
+  const [lo, hi] = i1 <= i2 ? [i1, i2] : [i2, i1];
+  return all.slice(lo, hi + 1);
+}
+function updateSlotVisuals(iso) {
+  document.querySelectorAll(`.ucg-col-body[data-iso="${iso}"] .ucg-slot`).forEach(el => {
+    const sel = isSelected(el.dataset.d, el.dataset.t);
+    const isSuggested = !sel && state.requestedTime && el.dataset.t === state.requestedTime && el.dataset.d === state.parsed.fromDate;
+    el.className = `ucg-slot ${sel ? 'sel' : isSuggested ? 'suggested' : 'free'}`;
+    el.textContent = sel ? '✓' : isSuggested ? '★' : '+';
+  });
+  renderChips();
+}
+function slotFromY(bodyEl, clientY) {
+  const rect = bodyEl.getBoundingClientRect();
+  const startMin = toMin(settings.dayStart);
+  const endMin   = toMin(settings.dayEnd);
+  const pxPerMin = rect.height / (endMin - startMin);
+  const minOffset = Math.max(0, (clientY - rect.top) / pxPerMin);
+  const gran = parseInt(settings.slotGranularity) || 15;
+  const snapped = Math.round((startMin + minOffset) / gran) * gran;
+  const h = String(Math.floor(snapped / 60)).padStart(2, '0');
+  const m = String(snapped % 60).padStart(2, '0');
+  const t = `${h}:${m}`;
+  return slotTimes().includes(t) ? t : null;
+}
+let dragState = null;
 
 function renderChips() {
   const box = $("chips");
@@ -980,7 +1035,7 @@ function renderUnifiedGrid(days) {
     const headCls = ['ucg-col-head', isToday ? 'today' : '', isOffered ? 'offered-day' : ''].filter(Boolean).join(' ');
     return `<div class="ucg-col">`
       + `<div class="${headCls}"><span class="ucg-dow">${dowLabels[dow]}</span>${d.getDate()}/${d.getMonth()+1}</div>`
-      + `<div class="ucg-col-body" style="height:${totalPx}px">${bodyHtml}</div>`
+      + `<div class="ucg-col-body" data-iso="${iso}" style="height:${totalPx}px">${bodyHtml}</div>`
       + `</div>`;
   }).join('');
 
@@ -1004,10 +1059,52 @@ function renderUnifiedGrid(days) {
     + `<div class="${colsClass}">${colsHtml}</div>`
     + `</div></div>`;
 
-  // Slot click handlers
+  // Slot click handlers (fallback for non-pointer)
   wrap.querySelectorAll('.ucg-slot').forEach(el => {
     el.addEventListener('click', () => toggleSlot(el.dataset.d, el.dataset.t));
   });
+
+  // Drag-to-select: press and slide to sweep-select multiple slots
+  if (state.bookingMode) {
+    wrap.querySelectorAll('.ucg-col-body').forEach(body => {
+      const iso = body.dataset.iso;
+
+      body.addEventListener('pointerdown', e => {
+        if (!e.target.closest('.ucg-slot')) return;
+        const t = slotFromY(body, e.clientY);
+        if (!t) return;
+        e.preventDefault();
+        body.setPointerCapture(e.pointerId);
+        const adding = !isSelected(iso, t);
+        dragState = { iso, anchor: t, lastRange: [t], adding };
+        adding ? selectSlot(iso, t) : deselectSlot(iso, t);
+        updateSlotVisuals(iso);
+      }, { passive: false });
+
+      body.addEventListener('pointermove', e => {
+        if (!dragState || dragState.iso !== iso) return;
+        const t = slotFromY(body, e.clientY);
+        if (!t) return;
+        const newRange = slotsInRange(iso, dragState.anchor, t);
+        dragState.lastRange.forEach(s => {
+          if (!newRange.includes(s)) { dragState.adding ? deselectSlot(iso, s) : selectSlot(iso, s); }
+        });
+        newRange.forEach(s => { dragState.adding ? selectSlot(iso, s) : deselectSlot(iso, s); });
+        dragState.lastRange = newRange;
+        updateSlotVisuals(iso);
+      });
+
+      body.addEventListener('pointerup', () => {
+        if (!dragState || dragState.iso !== iso) return;
+        dragState = null;
+        state.selected.sort((a,b) => (a.dateISO + a.hhmm).localeCompare(b.dateISO + b.hhmm));
+        renderChips();
+        renderUnifiedGrid(weekDays(calState.weekKey || mondayOf(calState.day)));
+      });
+
+      body.addEventListener('pointercancel', () => { if (dragState && dragState.iso === iso) dragState = null; });
+    });
+  }
 }
 
 // =====================================================================
@@ -1726,6 +1823,7 @@ if (!localStorage.getItem(GATE_KEY)) {
 
 fillSettingsForm();
 setAiStatus();
+autoConnectGoogle();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 
 // Web Share Target — pre-fill message textarea when app is opened via share sheet
