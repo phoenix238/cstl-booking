@@ -259,6 +259,48 @@
   .ucg-event .ev-s { opacity: .85; font-size: 10px; }
 
   .ucg-empty { padding: 32px; text-align: center; font-size: 14px; color: var(--ink-soft); }
+
+  /* Accessibility warning banner */
+  .access-banner {
+    background: #fef8e7; border: 1px solid #e0c84a;
+    border-radius: 9px; padding: 10px 14px; margin: 12px 0 0;
+    font-size: 13px; color: #6b5000; display: flex; gap: 9px; align-items: flex-start;
+  }
+  .access-banner b { display: block; margin-bottom: 2px; color: #4a3600; }
+
+  /* Quarter-hour grid lines */
+  .ucg-hline.quarter { border-top: 1px dotted #f0ede7; }
+
+  /* PDF print view — hide app, show only the PDF div */
+  @media print {
+    body > .wrap, #toast, #gateOverlay { display: none !important; }
+    #booking-pdf {
+      display: block !important;
+      font-family: Georgia, "Times New Roman", serif;
+      max-width: 520px; margin: 0 auto; padding: 32px; color: #222; font-size: 14px; line-height: 1.6;
+    }
+    #booking-pdf .pdf-header { border-bottom: 2px solid #5b6b5a; padding-bottom: 14px; margin-bottom: 18px; }
+    #booking-pdf .pdf-title { font-size: 11px; text-transform: uppercase; letter-spacing: .18em; color: #5b6b5a; margin: 0 0 6px; font-family: monospace; }
+    #booking-pdf .pdf-name { font-size: 22px; font-weight: 600; margin: 0 0 2px; }
+    #booking-pdf .pdf-datetime { font-size: 16px; margin: 0; color: #444; }
+    #booking-pdf .pdf-section { margin-top: 16px; }
+    #booking-pdf .pdf-label { font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: #5b6b5a; margin: 0 0 3px; font-family: monospace; }
+    #booking-pdf .pdf-body { margin: 0; }
+    #booking-pdf a { color: #5b6b5a; word-break: break-all; }
+    #booking-pdf hr.pdf-rule { border: none; border-top: 1px solid #ddd; margin: 18px 0; }
+  }
+
+  /* Mobile calendar responsive */
+  @media (max-width: 600px) {
+    .wrap { padding: 20px 12px 80px; }
+    h1 { font-size: 24px; }
+    .ucg-col { min-width: 54px; }
+    .ucg-times { width: 38px; }
+    .ucg-time { font-size: 9px; }
+    .view-toggle button { font-size: 11px; padding: 4px 8px; }
+    .week-strip { gap: 3px; }
+    .tab { font-size: 13px; padding: 10px 10px; }
+  }
 </style>
 </head>
 <body>
@@ -267,7 +309,7 @@
     <p class="eyebrow">Intake &amp; Booking</p>
     <h1>A still point for the next client</h1>
     <p class="sub">Paste their message. Read it, pick the times you want to offer, draft a reply.</p>
-    <p style="font-size:11px;color:#9a9488;margin-top:4px;">build 2026-06-25c · read-only · live availability + personal calendar overlay</p>
+    <p style="font-size:11px;color:#9a9488;margin-top:4px;">build 2026-06-28 · live availability + PDF booking details + 15-min slots</p>
   </header>
 
   <nav class="tabs" id="tabs">
@@ -293,6 +335,18 @@
       <div class="clienttype" id="intentToggle">
         <div class="pill" data-intent="open">They're asking what's free</div>
         <div class="pill" data-intent="specific">They want a specific time</div>
+        <div class="pill" data-intent="reschedule">They want to reschedule</div>
+      </div>
+
+      <div id="rescheduleBlock" class="hidden grid2" style="margin-bottom:12px;">
+        <div class="field">
+          <label>Current appointment date</label>
+          <input id="fExistingDate" type="date">
+        </div>
+        <div class="field">
+          <label>Current appointment time</label>
+          <input id="fExistingTime" type="time">
+        </div>
       </div>
 
       <div class="grid2" style="margin-bottom:16px;">
@@ -304,9 +358,14 @@
           <label>Location</label>
           <select id="fLoc">
             <option value="waterloo">Waterloo (5 rooms)</option>
-            <option value="chalkfarm">Chalk Farm Studio</option>
+            <option value="chalkfarm">Bethnal Green Studio</option>
           </select>
         </div>
+      </div>
+
+      <div id="accessBanner" class="access-banner hidden">
+        <span style="font-size:15px;flex:none;line-height:1.4;">♿</span>
+        <div id="accessBannerText"></div>
       </div>
 
       <label style="display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px;font-family:ui-monospace,Menlo,monospace;">Client type</label>
@@ -333,6 +392,10 @@
       <button class="btn big" id="copyBtn" style="flex:2;">Copy reply</button>
       <button class="btn ghost" id="waBtn" style="flex:1;">WhatsApp</button>
       <button class="btn ghost" id="gmailBtn" style="flex:1;">Gmail</button>
+    </div>
+    <div id="pdfSection" class="hidden" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line);">
+      <button class="btn ghost" id="pdfBtn" style="width:100%;font-size:14px;">Save booking details (PDF)</button>
+      <p class="help" style="margin-top:6px;text-align:center;">Opens print dialog — save as PDF, then send via WhatsApp.</p>
     </div>
   </div>
 
@@ -430,21 +493,31 @@
         <label>Intake form link (for new clients)</label>
         <input id="setIntake" type="text" placeholder="https://forms.gle/…">
       </div>
-      <div class="grid2">
-        <div class="field">
-          <label>Waterloo — full location text</label>
-          <input id="setLoc1" type="text">
-        </div>
-        <div class="field">
-          <label>Chalk Farm — full location text</label>
-          <input id="setLoc2" type="text">
-        </div>
+      <div class="grid2" style="margin-bottom:12px;">
         <div class="field">
           <label>Your sign-off</label>
           <input id="setSignoff" type="text" placeholder="Phoenix x">
         </div>
+        <div class="field">
+          <label>Slot start granularity</label>
+          <select id="setSlotGran">
+            <option value="15">Every 15 minutes</option>
+            <option value="30">Every 30 minutes</option>
+            <option value="60">Every 60 minutes</option>
+          </select>
+        </div>
       </div>
-      <div class="field" style="margin-top:16px;">
+      <div class="grid2" style="margin-bottom:12px;">
+        <div class="field">
+          <label>Cancellation policy</label>
+          <input id="setCancelPolicy" type="text" placeholder="£30 fee if cancelled within 24 hours">
+        </div>
+        <div class="field">
+          <label>Payment options</label>
+          <input id="setPaymentOptions" type="text" placeholder="cash or bank transfer">
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:16px;">
         <label>Working hours (offered slots)</label>
         <div class="grid2">
           <input id="setDayStart" type="time" value="11:00">
@@ -457,10 +530,61 @@
       <div class="save-bar" id="saveBar"></div>
     </div>
 
+    <div class="card">
+      <h2>Venue details</h2>
+      <p class="help" style="margin-bottom:18px;">Saved once, used in every booking confirmation PDF.</p>
+
+      <strong style="font-size:14px;display:block;margin-bottom:12px;">Waterloo</strong>
+      <div class="grid2" style="margin-bottom:10px;">
+        <div class="field">
+          <label>Address</label>
+          <input id="setWaterlooAddr" type="text" placeholder="Breathe London, 3 Lower Marsh, SE1 7RJ">
+        </div>
+        <div class="field">
+          <label>Google Maps link</label>
+          <input id="setWaterlooMaps" type="text" placeholder="https://maps.app.goo.gl/…">
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:10px;">
+        <label>Access instructions</label>
+        <textarea id="setWaterlooAccess" style="min-height:64px;"></textarea>
+      </div>
+      <div class="field" style="margin-bottom:20px;">
+        <label>Accessibility note (shown as reminder when booking new clients)</label>
+        <input id="setWaterlooA11y" type="text" placeholder="Stairs only — no lift available">
+      </div>
+
+      <strong style="font-size:14px;display:block;margin-bottom:12px;">Bethnal Green Studio</strong>
+      <div class="grid2" style="margin-bottom:10px;">
+        <div class="field">
+          <label>Address</label>
+          <input id="setBethnalAddr" type="text" placeholder="Studio address, Bethnal Green E2">
+        </div>
+        <div class="field">
+          <label>Google Maps link</label>
+          <input id="setBethnalMaps" type="text" placeholder="https://maps.app.goo.gl/…">
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:10px;">
+        <label>Access instructions</label>
+        <textarea id="setBethnalAccess" style="min-height:64px;"></textarea>
+      </div>
+      <div class="field" style="margin-bottom:16px;">
+        <label>Accessibility note</label>
+        <input id="setBethnalA11y" type="text" placeholder="Lift is currently out of service — stairs only">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="saveVenueSettings">Save venue details</button>
+      </div>
+      <div class="save-bar" id="saveVenueBar"></div>
+    </div>
+
   </div><!-- /settingsView -->
 
 </div>
 
+<div id="booking-pdf" style="display:none;"></div>
 <div class="toast" id="toast"></div>
 
 <div id="gateOverlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
@@ -494,7 +618,7 @@ const VENUES = {
     ]
   },
   chalkfarm: {
-    label: "Chalk Farm",
+    label: "Bethnal Green Studio",
     mode: "single",
     cals: ["chalkfarm215@gmail.com"]
   }
@@ -507,13 +631,24 @@ const HALF_PX = 28;
 
 // ---------- SETTINGS ----------
 const DEFAULTS = {
-  intake: "https://forms.gle/your-intake-form",
+  intake: "",
   loc1: "Breathe London Wellbeing, Waterloo SE1",
-  loc2: "Chalk Farm Studio, NW1",
+  loc2: "Bethnal Green Studio",
   signoff: "Phoenix x",
   worker: "",
   dayStart: "08:00",
-  dayEnd: "21:00"
+  dayEnd: "21:00",
+  slotGranularity: "15",
+  cancelPolicy: "£30 cancellation fee if cancelled within 24 hours of your session.",
+  paymentOptions: "cash or bank transfer",
+  waterloo_addr: "Breathe London Wellbeing, 3 Lower Marsh, London SE1 7RJ",
+  waterloo_access: "Enter the clinic via the gym entrance on the ground floor. Staff will direct you upstairs — I'll meet you in the waiting room.",
+  waterloo_a11y: "Please note there are stairs to the treatment rooms — no lift is available. Please let me know if you have any accessibility needs.",
+  waterloo_maps: "",
+  chalkfarm_addr: "",
+  chalkfarm_access: "The door is just to the left of the art gallery on the main road. I'll come down to meet you — if you arrive early please message me. If someone is at the front desk they can sign you in (Room 311).",
+  chalkfarm_a11y: "Please note the lift is currently out of service — stairs only. Please let me know if you have any accessibility needs.",
+  chalkfarm_maps: ""
 };
 let settings = loadSettings();
 
@@ -540,7 +675,9 @@ const state = {
   offeredDays: [],
   selected: [],
   bookingMode: false,
-  requestedTime: ""
+  requestedTime: "",
+  existingDate: "",
+  existingTime: ""
 };
 
 const $ = id => document.getElementById(id);
@@ -630,13 +767,14 @@ async function calEventsFull(cid, timeMinISO, timeMaxISO) {
   return (j.items || []).filter(e => e.status !== "cancelled").map(e => {
     const allDay = !(e.start && e.start.dateTime);
     return {
+      id: e.id,
+      calId: cid,
       allDay,
       transparency: e.transparency || "opaque",
       s: new Date(allDay ? (e.start.date + "T00:00:00") : e.start.dateTime),
       e: new Date(allDay ? (e.end.date   + "T00:00:00") : e.end.dateTime),
       title: e.summary || "(busy)",
-      loc: e.location || "",
-      calId: cid
+      loc: e.location || ""
     };
   });
 }
@@ -675,14 +813,19 @@ function fmtClock(d) {
   return m ? `${hh}.${String(m).padStart(2,"0")}${ap}` : `${hh}${ap}`;
 }
 
-// The offered hourly start slots within working hours
+// The offered start slots within working hours, stepping by the configured granularity
 function slotTimes() {
   const start = toMin(settings.dayStart), end = toMin(settings.dayEnd);
+  const step = parseInt(settings.slotGranularity) || 15;
   const out = [];
-  for (let m = start; m + SLOT_MIN <= end; m += 60) {
+  for (let m = start; m + SLOT_MIN <= end; m += step) {
     out.push(String(Math.floor(m/60)).padStart(2,"0") + ":" + String(m%60).padStart(2,"0"));
   }
   return out;
+}
+function slotGranPx() {
+  const gran = parseInt(settings.slotGranularity) || 15;
+  return gran >= 60 ? HOUR_PX : gran >= 30 ? HALF_PX : HALF_PX / 2;
 }
 
 // Build offered weekdays starting from a date
@@ -783,15 +926,18 @@ function renderUnifiedGrid(days) {
     const isToday = iso === todayISO();
     const isOffered = OFFERED_DOW.includes(dow);
 
-    // Background hour/half lines
+    // Background hour/half/quarter lines
     let bodyHtml = '';
+    const gran = parseInt(settings.slotGranularity) || 15;
     for (let i = 0; i < totalHH; i++) {
-      const isHour = (i % 2 === 0);
-      bodyHtml += `<div class="ucg-hline ${isHour ? 'hour' : 'half'}" style="top:${i * HALF_PX}px"></div>`;
+      const minOffset = i * 30;
+      const cls = (minOffset % 60 === 0) ? 'hour' : (minOffset % 30 === 0) ? 'half' : 'quarter';
+      bodyHtml += `<div class="ucg-hline ${cls}" style="top:${i * HALF_PX}px"></div>`;
     }
 
     // Booking slots — show on all days when in booking mode
     if (state.bookingMode) {
+      const slotH = Math.max(12, slotGranPx() - 2);
       slotTimes().forEach(t => {
         const slotStart = new Date(`${iso}T${t}:00`);
         if (slotStart <= now) return;
@@ -802,7 +948,7 @@ function renderUnifiedGrid(days) {
         const top = timeToOffsetPx(t);
         const cls = sel ? 'sel' : isSuggested ? 'suggested' : 'free';
         const icon = sel ? '✓' : isSuggested ? '★' : '+';
-        bodyHtml += `<div class="ucg-slot ${cls}" style="top:${top + 2}px;height:${HOUR_PX - 4}px" data-d="${iso}" data-t="${t}">${icon}</div>`;
+        bodyHtml += `<div class="ucg-slot ${cls}" style="top:${top + 1}px;height:${slotH}px;font-size:10px;" data-d="${iso}" data-t="${t}">${icon}</div>`;
       });
     }
 
@@ -876,7 +1022,7 @@ const calState = {
   weekKey: "",
   loading: false,
   byDay: {},
-  viewDays: 7
+  viewDays: window.innerWidth < 600 ? 1 : 7
 };
 
 function escapeHtml(s) {
@@ -1010,9 +1156,11 @@ async function extractWithClaude(msg) {
     "Return ONLY a JSON object, no prose, with keys: " +
     "name (string, empty if unknown), location ('waterloo' | 'chalkfarm' | ''), " +
     "clientType ('new' | 'returning' | ''), " +
-    "intent ('open' if they ask broadly what's free over a span, 'specific' if they name a day/time), " +
-    "fromDate ('YYYY-MM-DD' earliest day they're hinting at, or ''), " +
-    "fromTime ('HH:MM' in 24h if they name a specific time, else ''). " +
+    "intent ('open' if they ask broadly what's free, 'specific' if they name a day/time, 'reschedule' if they want to move an existing appointment), " +
+    "fromDate ('YYYY-MM-DD' of the date they want, or ''), " +
+    "fromTime ('HH:MM' 24h of the time they want, or ''), " +
+    "existingDate ('YYYY-MM-DD' of the appointment they want to move, or ''), " +
+    "existingTime ('HH:MM' 24h of the appointment they want to move, or ''). " +
     "Use '' for anything not stated.";
   const text = await askClaude(sys, msg);
   const m = text.match(/\{[\s\S]*\}/);
@@ -1022,15 +1170,19 @@ async function extractWithClaude(msg) {
 function normalise(j) {
   const locRaw = (j.location || "").toLowerCase();
   const loc = (locRaw === "chalkfarm" || locRaw.includes("chalk") || locRaw.includes("bethnal")) ? "chalkfarm" : "waterloo";
-  let fromTime = "";
-  if (/^\d{2}:\d{2}$/.test(j.fromTime || "")) fromTime = j.fromTime;
+  const validTime = t => /^\d{2}:\d{2}$/.test(t || "");
+  const validDate = d => /^\d{4}-\d{2}-\d{2}$/.test(d || "");
+  const intentRaw = (j.intent || "").toLowerCase();
+  const intent = intentRaw === "reschedule" ? "reschedule" : intentRaw === "specific" ? "specific" : "open";
   return {
     name: j.name || "",
     location: loc,
     clientType: j.clientType === "returning" ? "returning" : "new",
-    intent: j.intent === "specific" ? "specific" : "open",
-    fromDate: /^\d{4}-\d{2}-\d{2}$/.test(j.fromDate || "") ? j.fromDate : "",
-    fromTime
+    intent,
+    fromDate: validDate(j.fromDate) ? j.fromDate : "",
+    fromTime: validTime(j.fromTime) ? j.fromTime : "",
+    existingDate: validDate(j.existingDate) ? j.existingDate : "",
+    existingTime: validTime(j.existingTime) ? j.existingTime : ""
   };
 }
 function parseMessage(msg) {
@@ -1039,8 +1191,8 @@ function parseMessage(msg) {
   const loc = lower.includes("chalk") || lower.includes("bethnal") ? "chalkfarm" : "waterloo";
   const days = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
   const named = days.some(d => lower.includes(d)) || /\btoday\b|\btomorrow\b/.test(lower) || /\d\s*(am|pm|:\d)/.test(lower);
-  const intent = named && !/next week|any day|some ?time|what.*free|which days/.test(lower) ? "specific" : "open";
-  // extract time if mentioned e.g. "3pm", "14:00", "3.30pm"
+  const isReschedule = /reschedul|move.*to|change.*to|instead of|swap|different time/.test(lower);
+  const intent = isReschedule ? "reschedule" : (named && !/next week|any day|some ?time|what.*free|which days/.test(lower) ? "specific" : "open");
   let fromTime = "";
   const tm = lower.match(/\b(\d{1,2})(?:[:\.](\d{2}))?\s*(am|pm)/);
   if (tm) {
@@ -1049,7 +1201,7 @@ function parseMessage(msg) {
     if (tm[3] === "am" && h === 12) h = 0;
     fromTime = String(h).padStart(2,"0") + ":" + mins;
   }
-  return { name: nameMatch ? nameMatch[1] : "", location: loc, clientType: "new", intent, fromDate: "", fromTime };
+  return { name: nameMatch ? nameMatch[1] : "", location: loc, clientType: "new", intent, fromDate: "", fromTime, existingDate: "", existingTime: "" };
 }
 function fillReview(p) {
   $("fName").value = p.name;
@@ -1057,8 +1209,18 @@ function fillReview(p) {
   state.clientType = p.clientType;
   state.intent = p.intent;
   state.parsed = p;
+  state.existingDate = p.existingDate || "";
+  state.existingTime = p.existingTime || "";
   document.querySelectorAll("#clientType .pill").forEach(pill => pill.classList.toggle("active", pill.dataset.type === p.clientType));
   document.querySelectorAll("#intentToggle .pill").forEach(pill => pill.classList.toggle("active", pill.dataset.intent === p.intent));
+  // Show/hide reschedule fields
+  const rb = $("rescheduleBlock");
+  if (rb) {
+    rb.classList.toggle("hidden", p.intent !== "reschedule");
+    if (p.existingDate) $("fExistingDate").value = p.existingDate;
+    if (p.existingTime) $("fExistingTime").value = p.existingTime;
+  }
+  updateAccessBanner();
 }
 
 // =====================================================================
@@ -1070,26 +1232,34 @@ async function draftReply() {
   const ta = $("replyText"), by = $("draftBy");
   ta.value = ""; ta.placeholder = "Drafting…";
   by.innerHTML = '<span class="spinner"></span>Drafting…';
+
+  // Intake form warning for new clients
+  let intakeWarn = "";
+  if (state.clientType === "new" && isConfirm() && !settings.intake) {
+    intakeWarn = " · ⚠ Intake form URL not set — add it in Settings";
+  }
+
   const ctx = replyContext();
   if (aiReady()) {
     try {
       const text = await askClaude(ctx.system, ctx.user);
       ta.value = text || templateReply();
-      by.textContent = text ? "Drafted by Claude · edit freely before sending" : "Claude returned nothing — used template";
+      by.textContent = (text ? "Drafted by Claude · edit freely before sending" : "Claude returned nothing — used template") + intakeWarn;
       return;
     } catch (e) {
       ta.value = templateReply();
-      by.textContent = "Claude unavailable (" + e.message + ") — used template";
+      by.textContent = "Claude unavailable (" + e.message + ") — used template" + intakeWarn;
       return;
     }
   }
   ta.value = templateReply();
-  by.textContent = "Template draft — add a Worker URL in Settings for Claude-written replies";
+  by.textContent = "Template draft — add a Worker URL in Settings for Claude-written replies" + intakeWarn;
 }
-function isConfirm() { return state.intent === "specific" && state.selected.length === 1; }
+function isConfirm() { return (state.intent === "specific" || state.intent === "reschedule") && state.selected.length === 1; }
 function replyContext() {
   const name = $("fName").value || "there";
-  const loc = shortLoc(venueKey());
+  const vKey = venueKey();
+  const loc = shortLoc(vKey);
   const isNew = state.clientType === "new";
   const opts = state.selected.map(s => s.label).join("; ");
   const fields = [
@@ -1097,27 +1267,51 @@ function replyContext() {
     "Client type: " + (isNew ? "new (first session)" : "returning"),
     "Location: " + loc,
     "Sign off with exactly: " + settings.signoff,
-    "Original message from client: \"" + $("msgInput").value.trim() + "\"",
-    "Times Phoenix is offering: " + opts
+    "Original message from client: \"" + $("msgInput").value.trim() + "\""
   ];
+  if (opts) fields.push("Times Phoenix is offering: " + opts);
   let task;
-  if (isConfirm()) {
+  if (state.intent === "reschedule") {
+    const oldDate = $("fExistingDate") && $("fExistingDate").value ? fmtDate($("fExistingDate").value) : "";
+    const oldTime = $("fExistingTime") && $("fExistingTime").value ? fmtTime($("fExistingTime").value) : "";
+    if (oldDate || oldTime) fields.push("Moving from: " + [oldDate, oldTime].filter(Boolean).join(" at "));
+    task = "Write a short, warm reply confirming the rescheduled time. Keep it to 2 sentences. Don't repeat all the booking details — just confirm the new time clearly and say you look forward to it.";
+  } else if (isConfirm()) {
     task = "Write the reply confirming this single time clearly and warmly. The client named it and it's free.";
-    if (isNew) { fields.push("Intake form link: " + settings.intake); task += " Add a short line asking them to fill in the intake form before the first session."; }
+    if (isNew) {
+      const intakeUrl = settings.intake;
+      if (intakeUrl) { fields.push("Intake form link: " + intakeUrl); task += " Add a short line asking them to fill in the intake form before the first session."; }
+    }
+    if (settings.cancelPolicy) fields.push("Cancellation policy to mention: " + settings.cancelPolicy);
+    if (settings.paymentOptions) fields.push("Payment options to mention: " + settings.paymentOptions);
   } else {
     task = "Write the first reply. Offer the times listed above as friendly options and ask which suits. Do not confirm yet. "
-         + "Close with: 'If none of those work, let me know and we'll find another time.' Do not mention any intake form.";
+         + "Close with: 'If none of those work, let me know and we'll find another time.' Do not mention any intake form, payment or cancellation policy yet.";
   }
   return { system: VOICE + " " + task, user: fields.join("\n") };
+}
+function venueDetailsForPDF(vKey) {
+  return {
+    address: settings[vKey + "_addr"] || (vKey === "waterloo" ? settings.loc1 : settings.loc2),
+    access:  settings[vKey + "_access"] || "",
+    a11y:    settings[vKey + "_a11y"]   || "",
+    maps:    settings[vKey + "_maps"]   || ""
+  };
 }
 function templateReply() {
   const name = $("fName").value || "there";
   const loc = shortLoc(venueKey());
   const isNew = state.clientType === "new";
+  if (state.intent === "reschedule" && state.selected.length === 1) {
+    const s = state.selected[0];
+    return `Hi ${name}, all sorted — see you on ${s.label} at ${loc}. ${settings.signoff}`;
+  }
   if (isConfirm()) {
     const s = state.selected[0];
-    const intake = isNew ? ` As it's your first session, here's a short intake form to fill in before we meet: ${settings.intake}` : "";
-    return `Hi ${name}, that's confirmed: ${s.label} at ${loc}.${intake} Looking forward to it. ${settings.signoff}`;
+    const intake = (isNew && settings.intake) ? ` As it's your first session, here's a short intake form to fill in before we meet: ${settings.intake}` : "";
+    const pay = settings.paymentOptions ? ` Payment by ${settings.paymentOptions}.` : "";
+    const cancel = settings.cancelPolicy ? ` Please note: ${settings.cancelPolicy}.` : "";
+    return `Hi ${name}, that's confirmed: ${s.label} at ${loc}.${intake}${pay}${cancel} Looking forward to it. ${settings.signoff}`;
   }
   const opts = state.selected.map(s => s.label).join(", ");
   return `Hi ${name}, lovely to hear from you. I've got a few times free at ${loc}: ${opts}. Would any of those suit? If none of those work, let me know and we'll find another time. ${settings.signoff}`;
@@ -1141,6 +1335,80 @@ function fallbackCopy(text) {
 function showToast(msg) {
   const t = $("toast"); t.textContent = msg; t.classList.add("show");
   setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+// =====================================================================
+//  BOOKING DETAILS PDF
+// =====================================================================
+function generatePDF() {
+  const name = $("fName").value || "Client";
+  const vKey = venueKey();
+  const vLabel = VENUES[vKey].label;
+  const sel = state.selected[0] || null;
+  const isNew = state.clientType === "new";
+  const d = venueDetailsForPDF(vKey);
+
+  const row = (label, body) => body
+    ? `<div class="pdf-section"><p class="pdf-label">${label}</p><p class="pdf-body">${body}</p></div>`
+    : "";
+
+  let html = `<div class="pdf-header">
+    <p class="pdf-title">Session Confirmation — CSTL</p>
+    <p class="pdf-name">${escapeHtml(name)}</p>
+    ${sel ? `<p class="pdf-datetime">${escapeHtml(fmtDate(sel.dateISO))} at ${escapeHtml(fmtTime(sel.hhmm))}</p>` : ""}
+  </div>`;
+
+  const addrLine = [escapeHtml(vLabel), escapeHtml(d.address)].filter(Boolean).join("<br>");
+  const mapsLine = d.maps ? `<br><a href="${escapeHtml(d.maps)}">${escapeHtml(d.maps)}</a>` : "";
+  html += row("Venue", addrLine + mapsLine);
+  html += row("Getting in", escapeHtml(d.access).replace(/\n/g, "<br>"));
+  html += row("Accessibility", escapeHtml(d.a11y));
+
+  html += `<hr class="pdf-rule">`;
+  html += row("Payment", escapeHtml(settings.paymentOptions));
+  html += row("Cancellation", escapeHtml(settings.cancelPolicy));
+
+  if (isNew && settings.intake) {
+    html += `<hr class="pdf-rule">`;
+    html += row("Before your session", `Please fill in a short intake form before we meet:<br><a href="${escapeHtml(settings.intake)}">${escapeHtml(settings.intake)}</a>`);
+  }
+
+  html += `<hr class="pdf-rule">`;
+  html += `<div class="pdf-section"><p class="pdf-body">Any questions, message Phoenix — ${escapeHtml(settings.signoff)}</p></div>`;
+
+  $("booking-pdf").innerHTML = html;
+  window.print();
+}
+
+// =====================================================================
+//  CALENDAR EVENT PATCH (for rescheduling)
+// =====================================================================
+async function patchCalEvent(calId, eventId, newDateISO, newHhmm) {
+  const start = new Date(`${newDateISO}T${newHhmm}:00`);
+  const end   = new Date(start.getTime() + 60 * 60000);
+  const body = {
+    start: { dateTime: start.toISOString(), timeZone: CONFIG.TIMEZONE },
+    end:   { dateTime: end.toISOString(),   timeZone: CONFIG.TIMEZONE }
+  };
+  const r = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events/${encodeURIComponent(eventId)}`,
+    { method: "PATCH", headers: { "Authorization": "Bearer " + googleToken.access_token, "Content-Type": "application/json" }, body: JSON.stringify(body) }
+  );
+  if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || r.status); }
+  return r.json();
+}
+
+async function findAndPatchEvent(existingDateISO, existingHhmm, newDateISO, newHhmm) {
+  if (!tokenValid() || !existingDateISO || !existingHhmm) return null;
+  const calId = HOLD_CAL[venueKey()] || HOLD_CAL.waterloo;
+  const timeMin = new Date(existingDateISO + "T00:00:00").toISOString();
+  const timeMax = new Date(addDaysISO(existingDateISO, 1) + "T00:00:00").toISOString();
+  let evs = [];
+  try { evs = await calEventsFull(calId, timeMin, timeMax); } catch(e) { return null; }
+  const target = new Date(`${existingDateISO}T${existingHhmm}:00`);
+  const match = evs.find(ev => Math.abs(ev.s - target) < 31 * 60000);
+  if (!match || !match.id) return null;
+  return patchCalEvent(calId, match.id, newDateISO, newHhmm);
 }
 
 // Hold calendar events
@@ -1192,15 +1460,31 @@ function switchTab(tab) {
 // =====================================================================
 //  WIRING
 // =====================================================================
+function updateAccessBanner() {
+  const v = venueKey();
+  const note = settings[v + "_a11y"] || "";
+  const banner = $("accessBanner");
+  if (!banner) return;
+  if (state.clientType === "new" && note) {
+    $("accessBannerText").innerHTML = `<b>Accessibility reminder</b>${escapeHtml(note)}`;
+    banner.classList.remove("hidden");
+  } else {
+    banner.classList.add("hidden");
+  }
+}
+
 $("intentToggle").addEventListener("click", e => {
   if (!e.target.dataset.intent) return;
   state.intent = e.target.dataset.intent;
   document.querySelectorAll("#intentToggle .pill").forEach(p => p.classList.toggle("active", p === e.target));
+  const rb = $("rescheduleBlock");
+  if (rb) rb.classList.toggle("hidden", state.intent !== "reschedule");
 });
 $("clientType").addEventListener("click", e => {
   if (!e.target.dataset.type) return;
   state.clientType = e.target.dataset.type;
   document.querySelectorAll("#clientType .pill").forEach(p => p.classList.toggle("active", p === e.target));
+  updateAccessBanner();
 });
 
 $("readBtn").addEventListener("click", async () => {
@@ -1251,6 +1535,7 @@ $("fLoc").addEventListener("change", () => {
     $("bannerLoc").textContent = shortLoc(venueKey());
     renderUnifiedGrid(weekDays(calState.weekKey || mondayOf(calState.day)));
   }
+  updateAccessBanner();
 });
 
 $("draftBtn").addEventListener("click", async () => {
@@ -1259,13 +1544,35 @@ $("draftBtn").addEventListener("click", async () => {
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Drafting…';
   await draftReply();
   if ($("holdCheck").checked) await holdSelectedSlots();
+
+  // Reschedule: try to update the existing calendar event
+  if (state.intent === "reschedule" && state.selected.length === 1) {
+    const exDate = $("fExistingDate") && $("fExistingDate").value;
+    const exTime = $("fExistingTime") && $("fExistingTime").value;
+    const newSlot = state.selected[0];
+    if (exDate && exTime && tokenValid()) {
+      const statusEl = $("holdStatus");
+      statusEl.style.display = "block"; statusEl.textContent = "Updating calendar event…";
+      try {
+        const updated = await findAndPatchEvent(exDate, exTime, newSlot.dateISO, newSlot.hhmm);
+        statusEl.textContent = updated ? "Calendar event updated." : "Couldn't find the original event — please update it manually.";
+      } catch(e) {
+        statusEl.textContent = "Calendar update failed: " + e.message;
+      }
+    }
+  }
+
   btn.disabled = false; btn.textContent = "Draft reply";
-  // Switch to booking tab to show the reply
   state.bookingMode = false;
   $("calBookingBanner").classList.add("hidden");
   $("calPickSection").classList.add("hidden");
   $("holdCheck").checked = false;
   $("replyCard").classList.remove("hidden");
+
+  // Show PDF button only for confirmed single-slot bookings
+  const pdfSection = $("pdfSection");
+  if (pdfSection) pdfSection.classList.toggle("hidden", !isConfirm());
+
   switchTab("booking");
   $("replyCard").scrollIntoView({ behavior: "smooth", block: "start" });
 });
@@ -1333,30 +1640,55 @@ $("tabs").addEventListener("click", e => {
 
 // Settings form
 function fillSettingsForm() {
-  $("setIntake").value   = settings.intake;
-  $("setLoc1").value     = settings.loc1;
-  $("setLoc2").value     = settings.loc2;
-  $("setSignoff").value  = settings.signoff;
-  $("setWorker").value   = settings.worker;
-  $("setDayStart").value = settings.dayStart;
-  $("setDayEnd").value   = settings.dayEnd;
+  $("setIntake").value         = settings.intake;
+  $("setSignoff").value        = settings.signoff;
+  $("setWorker").value         = settings.worker;
+  $("setDayStart").value       = settings.dayStart;
+  $("setDayEnd").value         = settings.dayEnd;
+  $("setSlotGran").value       = settings.slotGranularity || "15";
+  $("setCancelPolicy").value   = settings.cancelPolicy;
+  $("setPaymentOptions").value = settings.paymentOptions;
+  // Venue details
+  $("setWaterlooAddr").value   = settings.waterloo_addr;
+  $("setWaterlooAccess").value = settings.waterloo_access;
+  $("setWaterlooA11y").value   = settings.waterloo_a11y;
+  $("setWaterlooMaps").value   = settings.waterloo_maps;
+  $("setBethnalAddr").value    = settings.chalkfarm_addr;
+  $("setBethnalAccess").value  = settings.chalkfarm_access;
+  $("setBethnalA11y").value    = settings.chalkfarm_a11y;
+  $("setBethnalMaps").value    = settings.chalkfarm_maps;
 }
 $("saveSettings").addEventListener("click", () => {
-  settings.intake   = $("setIntake").value.trim() || DEFAULTS.intake;
-  settings.loc1     = $("setLoc1").value.trim()   || DEFAULTS.loc1;
-  settings.loc2     = $("setLoc2").value.trim()   || DEFAULTS.loc2;
-  settings.signoff  = $("setSignoff").value.trim() || DEFAULTS.signoff;
-  settings.worker   = $("setWorker").value.trim();
-  settings.dayStart = $("setDayStart").value || DEFAULTS.dayStart;
-  settings.dayEnd   = $("setDayEnd").value || DEFAULTS.dayEnd;
+  settings.intake          = $("setIntake").value.trim();
+  settings.signoff         = $("setSignoff").value.trim() || DEFAULTS.signoff;
+  settings.worker          = $("setWorker").value.trim();
+  settings.dayStart        = $("setDayStart").value || DEFAULTS.dayStart;
+  settings.dayEnd          = $("setDayEnd").value   || DEFAULTS.dayEnd;
+  settings.slotGranularity = $("setSlotGran").value || "15";
+  settings.cancelPolicy    = $("setCancelPolicy").value.trim();
+  settings.paymentOptions  = $("setPaymentOptions").value.trim();
   saveSettingsToStore();
   setAiStatus();
   $("saveBar").textContent = "Saved.";
   setTimeout(() => $("saveBar").textContent = "", 1800);
 });
+$("saveVenueSettings").addEventListener("click", () => {
+  settings.waterloo_addr   = $("setWaterlooAddr").value.trim();
+  settings.waterloo_access = $("setWaterlooAccess").value.trim();
+  settings.waterloo_a11y   = $("setWaterlooA11y").value.trim();
+  settings.waterloo_maps   = $("setWaterlooMaps").value.trim();
+  settings.chalkfarm_addr  = $("setBethnalAddr").value.trim();
+  settings.chalkfarm_access= $("setBethnalAccess").value.trim();
+  settings.chalkfarm_a11y  = $("setBethnalA11y").value.trim();
+  settings.chalkfarm_maps  = $("setBethnalMaps").value.trim();
+  saveSettingsToStore();
+  $("saveVenueBar").textContent = "Saved.";
+  setTimeout(() => $("saveVenueBar").textContent = "", 1800);
+});
 
 $("calBtn").addEventListener("click", () => connectGoogle());
 $("calSignOut").addEventListener("click", signOutGoogle);
+$("pdfBtn").addEventListener("click", generatePDF);
 
 // ---------- INIT ----------
 // Passcode gate
