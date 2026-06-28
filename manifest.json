@@ -2,7 +2,7 @@
   "name": "CSTL Booking",
   "short_name": "CSTL",
   "description": "Intake & booking platform",
-  "start_url": "/",
+  "start_url": "/cstl-booking/",
   "display": "standalone",
   "background_color": "#f3f1ec",
   "theme_color": "#5b6b5a",
@@ -21,7 +21,7 @@
     }
   ],
   "share_target": {
-    "action": "/",
+    "action": "/cstl-booking/",
     "method": "GET",
     "params": {
       "text": "msg"
