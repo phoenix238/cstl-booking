@@ -10,7 +10,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CSTL Booking">
 <meta name="theme-color" content="#5b6b5a">
-<script src="https://accounts.google.com/gsi/client" async></script>
 <style>
   :root {
     --bg: #f3f1ec;
@@ -744,11 +743,21 @@ function initGoogle() {
   setCalStatus("off", "Ready — tap Connect Google Calendar");
 }
 let pendingAfterAuth = null;
+function loadGsiThen(cb) {
+  if (googleReady()) { cb(); return; }
+  const s = document.createElement("script");
+  s.src = "https://accounts.google.com/gsi/client";
+  s.onload = cb;
+  document.head.appendChild(s);
+}
 function connectGoogle(after) {
   if (!CONFIG.GOOGLE_CLIENT_ID) { showToast("Add your Google Client ID first."); return; }
-  if (!tokenClient) { initGoogle(); if (!tokenClient) { showToast("Google sign-in still loading — try again in a moment."); return; } }
   pendingAfterAuth = after || null;
-  tokenClient.requestAccessToken({ prompt: googleToken ? "" : "consent" });
+  loadGsiThen(() => {
+    if (!tokenClient) initGoogle();
+    if (!tokenClient) { showToast("Google sign-in still loading — try again in a moment."); return; }
+    tokenClient.requestAccessToken({ prompt: googleToken ? "" : "consent" });
+  });
 }
 function signOutGoogle() {
   if (googleToken && googleReady()) { try { google.accounts.oauth2.revoke(googleToken.access_token); } catch(e){} }
@@ -1717,8 +1726,6 @@ if (!localStorage.getItem(GATE_KEY)) {
 
 fillSettingsForm();
 setAiStatus();
-renderCalToggles();
-initGoogle();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 
 // Web Share Target — pre-fill message textarea when app is opened via share sheet
